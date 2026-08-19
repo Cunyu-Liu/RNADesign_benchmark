@@ -1,0 +1,47 @@
+# Study context registry (Gate 0, ToeholdDesignBench)
+version: 0.1
+studies:
+  angenent2020:
+    citation: "Angenent-Mari NM et al. Nat Commun 11:5057 (2020)"
+    doi: "10.1038/s41467-020-18677-1"
+    role: R1_primary_fused
+    rna_type: prokaryotic_translation_activating_toehold_switch
+    architecture: first-gen-30nt
+    trigger_context: fused
+    reporter: GFP
+    host: Escherichia_coli_BL21
+    assay: flow-seq
+    temperature_C: 37
+    readout: normalized_ON_OFF_fractions
+    normalization: per-construct_gate_normalization
+    sources:
+      viral_genomes: 23
+      human_TFs: 908
+      random: 1
+    record_count_raw: 97436
+    record_count_paper_reported: 91534
+    window: 30nt_trigger
+    sliding_stride_nt: {virus: 5, human_TF: 10}
+    label_columns: [ON, OFF, ON_OFF]
+    qc_columns: [QC_ON, QC_OFF, QC_ON_OFF]
+    computational_proxies: [SalisLabON, SalisLabOFF, SalisLabONOFF, mfe_seq_*]
+    license: CC_BY_4.0
+
+  green2014_valeri2020:
+    citation: "Green et al. Cell 2014; Valeri et al. Nat Commun 11:5058 (2020)"
+    role: R2_auxiliary_free_trigger
+    trigger_context: free-truncated
+    approximate_size: ~168_free_trigger_sequences
+    notes: small free-trigger set; assay differs from fused
+
+  toehold_vista_2026:
+    citation: "Robson JM & Green AA. NAR 54(4):gkag097 (2026)"
+    doi: "10.1093/nar/gkag097"
+    role: R2_key_external_full_target
+    trigger_context: truncated_and_full_length_target
+    architecture: series-A-36nt
+    reporter: mCherry
+    target: mCherry_tiles
+    approximate_size: ~200_mCherry_tiles
+    label_columns: [OFF_AVG, ON_AVG_Truncated, ON_AVG_Full, ON_OFF_Full]
+    notes: SARS-CoV-2 prospective validation available in paper

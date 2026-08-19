@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Source/window overlap & leakage audit</title>
+<style>body{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;line-height:1.5}
+h1{border-bottom:2px solid #333} table{border-collapse:collapse;width:100%} td,th{border:1px solid #ccc;padding:6px 10px;text-align:left}
+.hl{background:#fef3c7} </style></head><body>
+<h1>Source/window overlap &amp; leakage audit (Gate 0, O0-05)</h1>
+<p><strong>Data:</strong> Angenent-Mari 2020 canonical pilot (97,436 rows; 931 target groups).</p>
+<h2>Key findings</h2>
+<ul>
+<li><strong>Sliding-window identity:</strong> adjacent 30-nt trigger windows share a median
+0.50 sequence identity (mean 0.42),
+with 16% of adjacent pairs at &ge;0.8 identity.</li>
+<li><strong>Tiling stride (inferred):</strong> {'virus': [1], 'human_TF': [1, 2, 3]}.</li>
+<li><strong>Random-row-split leakage:</strong> 49% of test tiles
+have a same-source adjacent neighbour in train &rarr; random row split leaks near-duplicate windows.</li>
+</ul>
+<h2>Conclusion</h2>
+<p>The 91k dataset is tiled with heavy local window overlap. A row-random split places near-identical
+neighbours on both sides; only a <em>source-disjoint</em> split (S1) prevents source/window leakage.</p>
+</body></html>

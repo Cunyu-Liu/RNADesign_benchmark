@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Gate 0 sanity baselines</title>
+<style>body{font-family:system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem;line-height:1.5}
+h1{border-bottom:2px solid #333} table{border-collapse:collapse;width:100%;margin:1rem 0}
+td,th{border:1px solid #ccc;padding:6px 10px} .k{text-align:right} </style></head><body>
+<h1>Gate 0 sanity baselines &amp; metrics (O0-07)</h1>
+<p>R1 prototype: per-target top-K candidate ranking. Success = top-20% ON/OFF within target (pre-registered placeholder).
+Metrics: success@K, NDCG@10, normalized regret. 52,861 admitted-paired records, 926 targets.</p>
+<h2>Source-disjoint split (rigorous)</h2>
+<table><tr><th>baseline</th><th>success@1</th><th>success@3</th><th>success@5</th><th>NDCG@10</th><th>regret</th></tr>
+<tr><td>B0_random</td><td>0.204</td><td>0.543</td><td>0.796</td><td>0.511</td><td>0.085</td></tr><tr><td>B0_gc_rule</td><td>0.129</td><td>0.360</td><td>0.559</td><td>0.414</td><td>0.140</td></tr><tr><td>B1_thermo</td><td>0.344</td><td>0.704</td><td>0.855</td><td>0.561</td><td>0.089</td></tr><tr><td>B2_mlp</td><td>0.296</td><td>0.645</td><td>0.839</td><td>0.552</td><td>0.060</td></tr></table>
+<h2>Row-random split (leaky reference)</h2>
+<table><tr><th>baseline</th><th>success@1</th><th>success@3</th><th>success@5</th><th>NDCG@10</th><th>regret</th></tr>
+<tr><td>B0_random</td><td>0.216</td><td>0.481</td><td>0.586</td><td>0.736</td><td>0.017</td></tr><tr><td>B0_gc_rule</td><td>0.153</td><td>0.399</td><td>0.549</td><td>0.690</td><td>0.025</td></tr><tr><td>B1_thermo</td><td>0.216</td><td>0.480</td><td>0.608</td><td>0.749</td><td>0.020</td></tr><tr><td>B2_mlp</td><td>0.245</td><td>0.510</td><td>0.622</td><td>0.750</td><td>0.014</td></tr></table>
+<h2>Reading</h2>
+<ul>
+<li><strong>B0_random</strong> success@1 &asymp; 0.20 matches the 20% success rate (chance).</li>
+<li><strong>B1_thermo</strong> (RBS-calculator ON:OFF / MFE proxy) beats random under source-disjoint split,
+demonstrating learnable signal after source isolation.</li>
+<li><strong>B2_mlp</strong> (small GPU MLP on trigger one-hot) is competitive but does not clearly exceed the
+thermodynamic baseline for intrinsic ranking &mdash; consistent with the &ldquo;prediction &ne; design&rdquo; thesis.</li>
+<li>Row-random split inflates NDCG and lowers regret (leakage), but the raw comparison is confounded by target
+size; rigorous E2 measurements are deferred to P4.</li>
+</ul>
+</body></html>

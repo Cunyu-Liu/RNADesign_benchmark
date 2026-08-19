@@ -1,0 +1,27 @@
+{
+  "benchmark": "ToeholdDesignBench",
+  "version": "0.1",
+  "task": "R1_fused_context_site_ranking",
+  "primary_metric": "success_at_1",
+  "secondary_metrics": ["success_at_3", "success_at_5", "ndcg_at_10", "normalized_regret_at_10", "on_off_pareto_front_size"],
+  "auxiliary_metrics": ["spearman_rho", "r2", "mae"],
+  "submission": {
+    "format": "csv",
+    "columns": ["record_id", "score"],
+    "budget_K": [1, 3, 5],
+    "note": "duplicates / illegal / empty outputs still consume the K budget"
+  },
+  "splits": {
+    "default": "source_disjoint",
+    "seed": 0,
+    "train_val_test_ratio": [0.7, 0.15, 0.15],
+    "invariant": "target_id never crosses train/val/test"
+  },
+  "information_regimes": ["sequence_only", "trigger_aware", "full_target_aware"],
+  "statistics": {
+    "unit": "target_id",
+    "ci": "95% target-level bootstrap",
+    "multiple_testing": "paired bootstrap deltas; primary metric pre-registered"
+  },
+  "blinding": "test labels (ON/OFF) hidden from method selection; thresholds pre-registered"
+}
