@@ -15,27 +15,29 @@ without access to test labels.
 ## Dependencies
 conda env `toeholdbench` (Python 3.10, pandas, pyarrow, numpy, scikit-learn, scipy, torch 2.5+cu121).
 Reproduce: `conda create -n toeholdbench --clone editflow` (or install per `requirements.txt`).
+Data paths can be overridden with `TD_BENCH_PROCESSED=/path/to/processed` (see src/runner.py).
 
-## Data pipeline
-1. **raw** — `raw/Toehold_Dataset_Final_2019-10-23.csv` (Angenent-Mari 2020, CC BY 4.0, LFS sha256 `1b3aec89…`).
-2. **canonical build** — `src/data/build_canonical.py` → `processed/canonical_pilot.parquet` (92,731 virus+TF records, 931 targets).
-3. **coordinate reconstruction** — `src/data/map_virus_genomes.py` / `map_tf.py` (resolve NCBI accessions,
-   map 30-nt triggers) + `src/build_canonical_final.py` → `processed/canonical_records.parquet`
-   (87,989 / 92,731 = 94.9% with absolute window_start/end + strand + source_accession).
-4. **splits** — `src/p2_build.py` → `processed/split_manifests.json/csv` (source-disjoint 70/15/15, overlap=0).
-5. **metrics** — `src/metrics/metrics.py` (success@K, NDCG@K, normalized regret, Pareto front; target-level bootstrap CI).
-
-## Baselines (P3) & experiments (P4)
-- `src/p3_baselines.py` — 8 baselines / 6 families (random, GC rule, thermodynamic RBS/MFE, Angenent-Mari MLP/CNN,
-  STORM/NuSpeak-equiv, SANDSTORM-equiv seq+structure, VISTA-like structure-rich).
-- `src/p4_experiments.py` — E1 prediction!=design, E2 split stress, E5 ratio pathology.
-- Reports: `docs/p3_baseline_report.md`, `docs/p4_report.md`.
+## Data pipeline (automatic download)
+```bash
+# 1) download public raw assets (Angenent-Mari CSV, official QC2 npz, VISTA external) into ./data
+bash scripts/download_data.sh
+# 2) build canonical records (coordinate reconstruction uses NCBI efetch, cached in processed/sequences)
+python src/build_canonical_final.py
+# 3) splits + leakage + oracle/random sanity
+python src/p2_build.py
+# 4) reproducible baselines (seed=0, torch seeded before model init) and experiments E1-E6
+python src/p3_baselines.py
+python src/p4_experiments.py
+```
+> Data disclosure: the sequence-mapped paired canonical set is 52,861 records (of the paper's 91,534
+> official paired labels, preserved in `raw/npz/scaling_data.npz` but not sequence-mappable). See
+> `docs/data_reconciliation.md` for the full accounting and the reconstruction path to ≥70k.
 
 ## Quick reproduction
 ```bash
 cd /home/cunyuliu/ToeholdDesignBench
-# metric unit tests
-python tests/test_metrics.py
+# metric unit tests (incl. bootstrap CI and runner integration)
+python tests/test_metrics.py && python tests/test_extended.py
 # evaluate a built-in baseline
 python src/runner.py --method B1_thermo
 # evaluate an external submission (record_id,score CSV)

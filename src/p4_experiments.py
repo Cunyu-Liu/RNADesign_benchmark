@@ -22,7 +22,7 @@ df = df[df["ON_OFF"].notna()].reset_index(drop=True)
 sp = pd.read_csv(SPLIT)
 df = df.merge(sp, on="target_id", how="left")
 
-# two success definitions
+# two success definitions: relative (LEAKY, kept for comparison) and ABSOLUTE (pre-registered, clean)
 df["succ_rel"] = (df.groupby("target_id")["ON_OFF"].transform("quantile", 0.8) <= df["ON_OFF"]).astype(int)
 df["succ_abs"] = ((df["ON"] >= 0.5) & (df["OFF"] <= 0.5)).astype(int)
 print("abs success positive rate:", round(df["succ_abs"].mean(), 4), " targets with >=1 abs success:",
@@ -63,7 +63,7 @@ te = df[df["split"] == "test"].reset_index(drop=True)
 def succ_at_1(te_df, scores):
     te2 = te_df.copy(); te2["score"] = scores
     return [success_at_k(g.sort_values("score", ascending=False)["record_id"].tolist(),
-                         dict(zip(g["record_id"], g["succ_rel"].astype(bool))), 1)
+                         dict(zip(g["record_id"], g["succ_abs"].astype(bool))), 1)
             for _, g in te2.groupby("target_id")]
 
 e1 = {}

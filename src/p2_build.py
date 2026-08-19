@@ -58,9 +58,8 @@ json.dump({k: v for k, v in manifests.items() if k != "target_split"},
 pd.DataFrame([{"target_id": k, "split": v} for k, v in split_of.items()]).to_csv(
     f"{OUT}/split_manifests.csv", index=False)
 
-# ---------- success definition (pre-registered prototype: top-20% ON_OFF within target) ----------
-df["thr"] = df.groupby("target_id")["ON_OFF"].transform("quantile", 0.8)
-df["success"] = (df["ON_OFF"] >= df["thr"]).astype(int)
+# ---------- success definition (pre-registered ABSOLUTE threshold, test-independent) ----------
+df["success"] = ((df["ON"] >= 0.5) & (df["OFF"] <= 0.5)).astype(int)
 
 # ---------- random / oracle sanity (on TEST targets, source-disjoint) ----------
 test = df[df["split"] == "test"]

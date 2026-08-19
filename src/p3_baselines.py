@@ -10,6 +10,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import torch
 
 sys.path.insert(0, "/home/cunyuliu/ToeholdDesignBench/src")
 from metrics.metrics import success_at_k, ndcg_at_k, normalized_regret, mean_with_ci  # noqa: E402
@@ -20,6 +21,9 @@ OUT = "/mnt/cunyuliu/ToeholdDesignBench/processed/p3_baselines.json"
 
 SEED = 0
 np.random.seed(SEED)
+# FIX-1: seed torch BEFORE any model construction (reproducibility)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
 
 df = pd.read_parquet(CANON)
 df = df[df["admission_status"] == "admitted_paired"].copy()
@@ -27,9 +31,8 @@ df = df[df["ON_OFF"].notna()].reset_index(drop=True)
 sp = pd.read_csv(SPLIT)
 df = df.merge(sp, on="target_id", how="left")
 
-# pre-registered success: top-20% ON/OFF within target (prototype, documented)
-df["thr"] = df.groupby("target_id")["ON_OFF"].transform("quantile", 0.8)
-df["success"] = (df["ON_OFF"] >= df["thr"]).astype(int)
+# FIX-2: pre-registered ABSOLUTE success (test-independent): ON>=0.5 AND OFF<=0.5
+df["success"] = ((df["ON"] >= 0.5) & (df["OFF"] <= 0.5)).astype(int)
 
 STRUCT_COLS = ["gc_trigger", "salis_onoff", "mfe_switch_off", "mfe_switch_on", "mfe_trigger"]
 for c in STRUCT_COLS:

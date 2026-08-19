@@ -11,6 +11,7 @@ target-level bootstrap CI, and emits a leaderboard entry + per-target prediction
 import argparse
 import json
 import sys
+import os
 import time
 
 import numpy as np
@@ -19,8 +20,11 @@ import pandas as pd
 sys.path.insert(0, "/home/cunyuliu/ToeholdDesignBench/src")
 from metrics.metrics import success_at_k, ndcg_at_k, normalized_regret, mean_with_ci  # noqa: E402
 
-CANON = "/mnt/cunyuliu/ToeholdDesignBench/processed/canonical_records.parquet"
-SPLIT = "/mnt/cunyuliu/ToeholdDesignBench/processed/split_manifests.csv"
+# FIX-4: data paths are overridable via env var (relative paths from a checkout),
+# with server defaults for backward compatibility.
+TD_PROC = os.environ.get("TD_BENCH_PROCESSED", "/mnt/cunyuliu/ToeholdDesignBench/processed")
+CANON = os.path.join(TD_PROC, "canonical_records.parquet")
+SPLIT = os.path.join(TD_PROC, "split_manifests.csv")
 SEED = 0
 
 
