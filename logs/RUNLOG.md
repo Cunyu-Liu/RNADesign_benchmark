@@ -29,3 +29,16 @@
 ### Data reconciliation (FIX-3)
 - docs/data_reconciliation.md written; official QC2 labels preserved at raw/npz/scaling_data.npz.
 - No labeled record dropped (all 52,861 admitted_paired retained; coordinate-unresolved kept as no_coord).
+
+### Docker verification (FIX-4, 2026-08-20)
+- `docker build` cannot run: user not in docker group (permission denied on /var/run/docker.sock); no passwordless sudo.
+- Static verification performed instead:
+  - Dockerfile syntax parsed OK via dockerfile-parse (structure: FROM/ENV/RUN/COPY/ENTRYPOINT valid).
+  - Base image `pytorch/pytorch:2.5.1-cuda12.1-cudnn9-runtime` confirmed to exist on Docker Hub (updated 2024-10-29).
+- Actual image build pending docker-group/sudo authorization.
+
+### Data upper-bound verification (FIX-3, final)
+- Label-column combinations in the primary CSV (virus+TF): ON|OFF|ON_OFF=52,861; OFF-only=22,125; none=12,431; ON-only=5,314.
+- ON_OFF == ON - OFF holds exactly on all 52,861 paired rows (max err 0).
+- Single-label rows carry NO ON_OFF value, so the identity formula cannot extend them; npz value-matching is ~99% ambiguous; counts-to-ON GBDT (CV R²=0.9998) cannot be applied to rows lacking dual-state counts.
+- Conclusion: 52,861 is the upper bound of sequence-mapped dual-label pairs in the public CSV.
