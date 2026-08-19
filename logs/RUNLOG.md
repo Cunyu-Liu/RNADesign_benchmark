@@ -42,3 +42,10 @@
 - ON_OFF == ON - OFF holds exactly on all 52,861 paired rows (max err 0).
 - Single-label rows carry NO ON_OFF value, so the identity formula cannot extend them; npz value-matching is ~99% ambiguous; counts-to-ON GBDT (CV R²=0.9998) cannot be applied to rows lacking dual-state counts.
 - Conclusion: 52,861 is the upper bound of sequence-mapped dual-label pairs in the public CSV.
+
+## User decisions (2026-08-20) — acceptance closed
+- FIX-3 (≥70k): user ACCEPTED the closure = official 91,534 QC2 labels preserved as the ≥70k paired asset
+  + primary sequence-mapped set disclosed at 52,861 + reconstruction path documented + zero fail-closed exclusion.
+- FIX-4 (Docker): user chose to SKIP the actual image build; static verification (syntax parse OK + base image
+  tag exists on Docker Hub) stands as the recorded validation.
+- All five FIX items (1–5) are therefore closed per the user's confirmed decisions.
