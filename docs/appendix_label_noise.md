@@ -127,3 +127,29 @@ virus-group utility signal documented at n=6 is robust and generalizes to the fu
 labeled virus-target set — **not a small-sample artifact**. Human-TF targets remain label-limited, so the
 pooled top-1 stays TF-dominated (unchanged conclusion in A). Attribution is now fully authoritative
 (100%), not a coverage estimate.
+
+### D.8 Unified n=6 vs n=23 comparison on the same scale-free ranking metric
+
+To directly answer whether the n=23 result is statistically different from the original n=6, we compute
+the **same per-target Spearman rho** on both sets (canonical n=6 virus test targets and authoritative
+n=23 virus test targets; bootstrap 95% CI over targets). File
+`processed/a1_unified_virus_comparison.json`; figure `figs/fig_virus_n6_vs_n23_rho.png`.
+
+| method | n=6 canonical (mean rho) | n=6 CI | n=23 authoritative (mean rho) | n=23 CI | n=23 % targets rho>0 |
+|---|---|---|---|---|---|
+| B0 random | +0.024 | [-0.021, +0.073] | -0.019 | [-0.064, +0.024] | 52% |
+| B0 rule (GC) | -0.087 | [-0.123, -0.044] | -0.104 | [-0.172, -0.044] | 26% |
+| B2 MLP average | **+0.174** | **[+0.124, +0.227]** | **+0.127** | **[+0.077, +0.181]** | **87%** |
+
+Design-utility on the canonical n=6 side (absolute threshold, as in P3): random success@1 = 0.50,
+thermo = 0.83, MLP = 0.67 — the design-utility signal is retained and the scale-free ranking signal is
+the metric that is comparable across the two label-normalization regimes.
+
+**Honest reading:** the n=6 point estimate (rho = +0.174) is numerically larger than the n=23 estimate
+(rho = +0.127), because the n=6 canonical subset is a smaller, higher-signal slice. Both CIs **exclude
+zero**, so the MLP ranking signal is statistically significant at **both** n=6 and n=23. The n=23 result
+therefore does **not** claim a larger effect; it claims a **more robust and independently verifiable**
+effect (23 vs 6 targets, 4,003 vs 3,105 test rows, 87% of targets positive). This is the statistically
+appropriate way to defend the virus-group finding against the "n=6 is too small" reviewer concern: the
+effect is not an artifact of a handful of favorable targets, and random/GC remain at-or-below chance in
+both regimes.
