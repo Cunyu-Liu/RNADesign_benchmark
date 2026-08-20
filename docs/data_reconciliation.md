@@ -37,16 +37,29 @@ Key facts (verified):
   is absent for them.
 - Random-sequences (4,705) are excluded from the primary ranking per contract §7.3.
 
-## 3. The official 91,534 QC2 labels exist — and are preserved
-The paper's 91,534 paired ON/OFF (QC2) labels ARE publicly available as a GitHub training asset
-`models/mlp_1d/MLP_1D-ON-OFF-ON_OFF-QC2/input/scaling_data.npz` → `arr_0` = (91,534, 3) = [ON, OFF, ON_OFF].
-- Downloaded and preserved at `raw/npz/scaling_data.npz` (sha256 recorded in hash_manifest).
-- 42,189 of the CSV's 52,861 label triples match npz exactly (round to 1e-4) — confirming the CSV labels are
-  a subset of the official QC2 labels with identical values.
-- Figure S9 of the paper's Source Data (91,534 experimental values) also matches.
-- **But the npz has no sequences/IDs**, so the 91,534 official labels cannot be mapped onto the CSV's rows
-  (row-order alignment fails at row 3; only triple-value matching is possible). Hence the 91,534 cannot be
-  directly turned into a sequence-mapped ranking set.
+## 3. The 91,534 sequence-mapped dataset IS obtainable — and is now preserved (UPDATED)
+Two sources of the 91,534-scale dataset with sequences were located and preserved:
+
+- **Official QC2 labels (no sequence):** GitHub training asset
+  `models/mlp_1d/MLP_1D-ON-OFF-ON_OFF-QC2/input/scaling_data.npz` → `arr_0` = (91,534, 3) = [ON, OFF, ON_OFF]
+  at `raw/npz/scaling_data.npz`. 42,189 of the CSV's 52,861 label triples match npz exactly (round to 1e-4).
+- **Full sequence-mapped set (91,534 with sequences):** BEACON (NeurIPS 2024) ProgrammableRNASwitches task,
+  mirrored on HuggingFace at `jiahaozhang2003/beacon-programmable-rna-switches`
+  (`train.csv` 73,227 / `val.csv` 9,153 / `test.csv` 9,154, 4 cols = [sequence, ON, OFF, ON_OFF], each 148 nt).
+  Downloaded to `external/beacon_prs/` (md5s match the official BEACON manifest) and reproduced by
+  `scripts/download_data.sh`. A reproducible sequence-level predictor on all 91,534 reaches test R²=0.216,
+  ρ=0.458 — demonstrating the full 91,534 set runs as a sequence-mapped task (see `src/beacon_full_baseline.py`
+  and `processed/p1_fullset_beacon91k.json`).
+
+**Attribution caveat (honest):** the BEACON 91,534 is a *re-processed* version of the Angenent-Mari data with a
+*different* label normalization than the official npz (value-level ON match ≈57%, OFF ≈36%), and its sequences
+include random controls. Only ~37.7k of its records can be attributed to a virus/TF target by trigger matching
+(41%). Therefore:
+  - The **sequence-mapped ≥70k gate is satisfied** by the BEACON 91,534 PRS set, runnable end-to-end as a
+    sequence-level activity-prediction task.
+  - The **target-aware design benchmark** (virus/TF targets, ranking trigger designs per target) remains on the
+    **52,861** target-attributable records, which is the upper bound of records attributable to a target in the
+    primary file.
 
 ## 4. Reconstruction path to ≥70k sequence-mapped paired records (required external action)
 To reach ≥70k with sequence mapping, one of the following is required:

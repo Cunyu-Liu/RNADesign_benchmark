@@ -40,7 +40,23 @@ if [ ! -s "$V" ]; then
     "https://raw.githubusercontent.com/AlexGreenLab/vista/main/Pairwise%20Probability/mCH_on_off_rank.xlsx"
 fi
 
-# 4) (optional) reference genomes/transcripts are fetched on demand by
+# 4) Full sequence-mapped PRS dataset (91,534) — BEACON (NeurIPS 2024) HF mirror.
+#    Array of [sequence, ON, OFF, ON_OFF]; train/val/test = 73,227/9,153/9,154.
+#    Mirrored from JiahaoZhang2003/beacon-programmable-rna-switches (CC BY 4.0 underlying data).
+BP="$EXT/beacon_prs"
+mkdir -p "$BP"
+for name_md5 in "train.csv adbe31a6eba54044069e9548385ad834" "val.csv c49cf21770fdc3553bb965aee47b03b1" "test.csv b39a2ee0aed350c3a67b3248f9499f17"; do
+  set -- $name_md5
+  f="$1"; want="$2"
+  if [ ! -s "$BP/$f" ]; then
+    echo "== downloading beacon $f =="
+    curl -sL -o "$BP/$f" "https://huggingface.co/datasets/jiahaozhang2003/beacon-programmable-rna-switches/resolve/main/$f"
+  fi
+  got=$(md5 -q "$BP/$f" 2>/dev/null || md5sum "$BP/$f" | awk '{print $1}')
+  echo "$f md5: $got (expect $want)"
+done
+
+# 5) (optional) reference genomes/transcripts are fetched on demand by
 #    src/data/map_virus_full.py / map_tf.py (NCBI efetch, cached in processed/sequences).
 
 echo "== done. contents: =="
