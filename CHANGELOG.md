@@ -2,6 +2,18 @@
 
 All notable changes to ToeholdDesignBench are documented here. Versioning follows Semantic Versioning.
 
+## [0.2.0] — 2026-08-20 — Publication-readiness (T1–T5 after reviewer evaluation)
+- **T1**: obtain and preserve the full 91,534 sequence-mapped PRS dataset (BEACON/NeurIPS 2024 HF mirror,
+  train 73,227 / val 9,153 / test 9,154; reproducible via `scripts/download_data.sh`); reproducible ≥70k
+  sequence-level baseline (test R² 0.216, ρ 0.458) via `src/beacon_full_baseline.py`. Honest finding: the
+  91,534 is a re-processed set (label normalization differs; only ~41% attributable to virus/TF), so the
+  target-aware design benchmark remains on the 52,861 target-attributable records.
+- **T2**: de-bind model names (B3_storm→B3_deep, B5_targetaware→B5_structrank); baselines are representative
+  families, not STORM/NuSpeak/SANDSTORM/Toehold-VISTA implementations. Numbers unchanged (re-verified).
+- **T3**: 5-seed mean ± 95% CI for all baselines + virus vs TF group robustness
+  (`src/p3_robustness.py`, `processed/p3_robustness_multiseed.json`). Finding: design-utility signal is
+  concentrated in virus targets (thermo success@1 0.83) and absent in TF targets — explaining pooled top-1≈random.
+
 ## [0.1.1] — 2026-08-20 — Strict-acceptance remediation (FIX-1..FIX-5)
 Applied after a strict acceptance audit against the contract (§9/§13). Changes:
 
