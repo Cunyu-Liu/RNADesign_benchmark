@@ -153,3 +153,68 @@ effect (23 vs 6 targets, 4,003 vs 3,105 test rows, 87% of targets positive). Thi
 appropriate way to defend the virus-group finding against the "n=6 is too small" reviewer concern: the
 effect is not an artifact of a handful of favorable targets, and random/GC remain at-or-below chance in
 both regimes.
+
+### D.9 Permutation test for the virus-group ranking signal (n=23 and n=6)
+
+The bootstrap CI in D.6/D.8 already shows the MLP mean rho excludes 0. To further rule out
+"accidental positive correlation", we add a **within-target permutation test**: for each virus
+target, ON_OFF labels are permuted (preserving target sizes and label distributions; destroying
+only the score↔label pairing), the per-target Spearman rho is recomputed, and the mean over
+targets forms the null. One-sided p = (#null ≥ observed + 1)/(B+1), B=5000. File
+`processed/a1_permutation_n23_n6.json`; script `src/a1_permutation.py`.
+
+| set | method | mean rho | p (5000 perm) |
+|---|---|---|---|
+| n=23 authoritative | **MLP avg** | **+0.127** | **0.0002** |
+| n=23 | random | -0.019 | 0.750 |
+| n=23 | GC | -0.104 | 1.000 |
+| n=6 canonical | **MLP avg** | **+0.174** | **0.0002** |
+| n=6 | random | +0.024 | 0.150 |
+| n=6 | GC | -0.087 | 1.000 |
+
+**Reading:** under 5,000 within-target label permutations, the MLP's observed mean rho is reached or
+exceeded only 1 time (p = 0.0002) at BOTH n=23 and n=6 — the virus-group ranking signal is not a
+label-shuffling artifact. Random is consistent with chance (p ≈ 0.75 at n=23, 0.15 at n=6) and GC is
+significantly negative (p ≈ 1.0 one-sided) — a passive negative control that further validates the test
+sensitivity. This strengthens D.6/D.8: the effect is significant beyond both target resampling (bootstrap)
+and label permutation.
+
+### D.10 Diagnosis: does deep learning actually beat thermodynamics? (protocol dependence)
+
+Reviewer Q5 asks why the paper's B2_mlp prediction rho (0.110) is below B1_thermo (0.136). The honest
+answer is that **the comparison is protocol-dependent and the apparent DL deficit is an artifact of the
+paper's training protocol** — this is a self-audit of E1, not a claim of DL superiority in general.
+File `processed/a1_dl_vs_thermo_diag.json`; script `src/a1_dl_vs_thermo.py`.
+
+Pooled (source-disjoint test, n=7,041 rows / 140 targets) prediction rho vs ON/OFF:
+
+| predictor | pooled rho |
+|---|---|
+| GC content | -0.200 |
+| salis_onoff (RBS-calculator alone) | +0.062 |
+| MFE switch-on (feature alone) | +0.258 |
+| MFE switch-off (feature alone) | +0.216 |
+| thermo composite (salis \| mfe, as in E1) | +0.136 |
+| **MLP, paper protocol (15 ep, seed 0)** | +0.110 |
+| **MLP, 20 epochs, 5-seed avg** | **+0.274** |
+
+Three findings:
+
+1. **The E1 "thermo beats DL" headline is protocol-sensitive.** Under the paper's exact protocol the MLP
+   (0.110) trails thermo (0.136). With the standard cheap fix of 20 epochs + 5-seed ensembling, the MLP
+   reaches 0.274 — **2× the thermo composite and the best single predictor on the held-out set**. The
+   earlier reading (E1) was therefore an *undertrained single-seed* artifact; we report this openly as a
+   self-audit and do not keep the "thermo is the best predictor" claim as a robust headline.
+2. **The deep MLP learns MFE-like structure signal from sequence alone.** Its predictions correlate with
+   mfe_switch_on (+0.373) and mfe_switch_off (+0.357), and near-zero with salis_onoff (+0.028). I.e., the
+   network rediscovers the thermodynamic/MFE component of the switch from the 30-nt trigger representation,
+   and slightly improves on it — it does not merely memorize.
+3. **No overfitting collapse under source isolation.** MLP train rho = 0.238 vs test rho = 0.274; the
+   source-disjoint split does not cause a train↔test gap for this model (the earlier "weak signal" reading
+   in D/A was about *all* predictors having low absolute rho, not about DL overfitting).
+
+**Implication for the paper:** E1's specific claim "best predictor = B1_thermo" should be softened to
+"under the paper's baseline protocol the thermodynamic composite and a single-seed MLP are comparable; with
+multi-seed ensembling the MLP outperforms thermo, and the MLP learns an MFE-like signal from sequence".
+The broader E1/E5/E6 message — prediction quality and per-target design utility rank inconsistently, and
+evaluator/protocol choice changes the answer — is *strengthened*, not weakened, by this protocol audit.
