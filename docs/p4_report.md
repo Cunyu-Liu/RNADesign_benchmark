@@ -58,6 +58,30 @@ cross-evaluator top-1 agreement (MLP vs thermo) = **0.086**; A_model's top-1 pic
 percentile = **0.542** (vs 1.0 self-rank). **Finding 5:** the choice of evaluator changes the answer (8.6%
 agreement), and self-ranking over-rates its picks (proxy overfitting).
 
+## Unified table: prediction quality vs design utility (T5)
+One table combining the two axes on the same source-disjoint test split
+(`processed/p5_unified_table.json`, `src/p5_unified_table.py`; design values = P3; prediction rho held-out):
+
+| method | prediction ρ (held-out) | success@1 | success@3 | NDCG@10 | regret |
+|---|---|---|---|---|---|
+| B0_random | -0.002 | 0.350 | 0.593 | 0.520 | 0.085 |
+| B0_gc | -0.200 | 0.093 | 0.350 | 0.414 | 0.141 |
+| B1_thermo | **+0.136** | 0.343 | **0.700** | 0.564 | 0.085 |
+| B2_mlp | +0.110 | 0.350 | 0.664 | **0.588** | **0.051** |
+| B2_cnn | n/a | 0.200 | 0.579 | 0.501 | 0.100 |
+| B3_deep | n/a | 0.214 | 0.564 | 0.493 | 0.102 |
+| B4_struct | n/a | 0.214 | 0.500 | 0.484 | 0.107 |
+| B5_structrank | n/a | 0.336 | 0.679 | 0.541 | 0.088 |
+
+**Reading (honest inference, do not over-read ties):** the best *predictor* (B1_thermo, ρ=0.136) is a
+*tied* best at success@1 (0.343 vs B2_mlp/random 0.350) — i.e., the top-1 design row is near-random for
+everyone (see appendix T4). The signal that *does* separate methods appears at success@3/NDCG@10, where
+B2_mlp leads (NDCG@10 = 0.588, regret 0.051) and B1_thermo leads success@3 (0.700). Prediction ρ and design
+rank correlate only weakly (Spearman 0.32 over methods with both), supporting E1: reporting raw regression
+accuracy is not a reliable proxy for ranking/design utility. Because s@3/NDCG separate methods while s@1
+does not, we recommend reporting the top-1 absolute-hit result alongside s@3/NDCG, and we do not claim any
+method "wins" at the strict top-1 pooled level.
+
 ## Summary for P4 GO gate (≥2 non-trivial findings)
 1. Prediction ρ and design utility rank models inconsistently (E1).
 2. Row-random split leaks 99.9% of sources; leak does not trivially inflate ρ (E2).
