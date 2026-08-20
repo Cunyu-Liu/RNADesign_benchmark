@@ -13,11 +13,11 @@ Success definition: **pre-registered ABSOLUTE threshold ON>=0.5 AND OFF<=0.5** (
 | B0 random | B0_random | 0.350 | 0.593 | 0.520 | 0.085 |
 | B0 rule | B0_gc (GC content) | 0.093 | 0.350 | 0.414 | 0.141 |
 | B1 traditional | B1_thermo (RBS-calculator / MFE) | 0.343 | **0.700** | 0.564 | 0.085 |
-| B2 seq predictor | B2_mlp (Angenent-Mari MLP) | 0.350 | 0.664 | **0.588** | **0.051** |
-| B2 seq predictor | B2_cnn (Angenent-Mari CNN) | 0.200 | 0.579 | 0.501 | 0.100 |
-| B3 deep predictor | B3_storm (STORM/NuSpeak equiv) | 0.214 | 0.564 | 0.493 | 0.102 |
-| B4 seq+structure | B4_struct (SANDSTORM equiv) | 0.214 | 0.500 | 0.484 | 0.107 |
-| B5 target-aware | B5_targetaware (VISTA-like) | 0.336 | 0.679 | 0.541 | 0.088 |
+| B2 seq predictor | B2_mlp (MLP, 1-D k-mer input) | 0.350 | 0.664 | **0.588** | **0.051** |
+| B2 seq predictor | B2_cnn (1-D CNN, 1-D k-mer input) | 0.200 | 0.579 | 0.501 | 0.100 |
+| B3 deep encoder+head | B3_deep (1-layer LSTM/attention encoder + head) | 0.214 | 0.564 | 0.493 | 0.102 |
+| B4 seq+structure | B4_struct (MLP over concat(seq-embed, MFE/RBS)) | 0.214 | 0.500 | 0.484 | 0.107 |
+| B5 structure-rich ranker | B5_structrank (structure-rich features + ranker) | 0.336 | 0.679 | 0.541 | 0.088 |
 
 ## Reproducibility (FIX-1 verified)
 Two identical runs (same seed=0, torch seeded before model init) produced **identical** numbers for every
@@ -34,9 +34,13 @@ baseline (B2_mlp s@1 = 0.350 in both runs; previously 0.379/0.393 across runs). 
 - GC rule remains worst (s@1=0.093), confirming GC content is anticorrelated with switch function.
 
 ## Coverage & functional-equivalence notes (contract 8.1)
-- B0 exact; B1 thermodynamic proxy (RBS-calculator + ViennaRNA MFE, functionally equivalent to NUPACK/tsgen);
-  B2 Angenent-Mari MLP/CNN reproduced (simplified epochs); B3/B4/B5 functional equivalents (deep / seq+struct /
-  structure-rich) — R1 has no generative/redesign/full-target scenario.
+- B0 exact; B1 thermodynamic proxy (RBS-calculator + ViennaRNA MFE, functionally equivalent in spirit to
+  NUPACK/tsgen, but NOT an implementation of any single tool); B2 a plain MLP and 1-D CNN on k-mer input
+  (the design pattern of the Angenent-Mari predictive networks, re-implemented here, not their trained nets);
+  B3/B4/B5 are simple local re-implementations (deep encoder, seq+structure concat, structure-rich ranker) and
+  must NOT be read as the published STORM/NuSpeak, SANDSTORM, or Toehold-VISTA systems. We avoid those method
+  names; our B3/B4/B5 are *representative families* only, included to probe the prediction→design axis, not to
+  benchmark third-party tools. R1 has no generative/redesign/full-target scenario.
 - All 8 baselines ran (coverage 8/8); fixed seed => reproducible (verified 2 runs).
 
 ## Reproduce

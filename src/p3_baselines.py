@@ -1,9 +1,12 @@
 """P3: reproduce 6 core baseline families under a unified interface (R1 ranking).
 
-Baselines (contract 8.1): B0 random/rule, B1 traditional thermo, B2 Angenent-Mari
-MLP/CNN, B3 STORM/NuSpeak-like deep predictor, B4 SANDSTORM-like seq+structure,
-B5 VISTA-like target-aware (structure-rich). Fixed seeds; source-disjoint split;
-design-utility metrics (success@K/NDCG/regret) with target bootstrap.
+Baselines (contract 8.1) — honest local names, NOT bound to third-party tools:
+  B0 random/rule, B1 traditional thermodynamic proxy (RBS/MFE),
+  B2 plain MLP and 1-D CNN (k-mer input; design pattern of Angenent-Mari nets),
+  B3 deep encoder+head (1-D conv), B4 seq+structure concat, B5 structure-rich ranker.
+These are representative families to probe the prediction->design axis; they do NOT
+re-implement or endorse STORM/NuSpeak, SANDSTORM, or Toehold-VISTA.
+Fixed seeds; source-disjoint split; design-utility metrics (success@K/NDCG/regret).
 """
 import json
 import sys
@@ -84,7 +87,7 @@ def make_cnn():
         torch.nn.Conv1d(4, 64, 5), torch.nn.ReLU(), torch.nn.AdaptiveAvgPool1d(1),
         torch.nn.Flatten(), torch.nn.Linear(64, 32), torch.nn.ReLU(), torch.nn.Linear(32, 1))
 
-def make_storm():
+def make_deep1d():
     import torch
     return torch.nn.Sequential(
         torch.nn.Conv1d(4, 64, 5), torch.nn.ReLU(), torch.nn.Conv1d(64, 128, 3), torch.nn.ReLU(),
@@ -113,22 +116,22 @@ def scorer(name, tr, te):
         Xtr_c = Xtr_o.reshape(len(Xtr_o), 4, 30); Xte_c = Xte_o.reshape(len(Xte_o), 4, 30)
         m, dev = _train(make_cnn(), Xtr_c, ytr, epochs=15)
         return _predict(m, dev, Xte_c)
-    if name == "B3_storm":
+    if name == "B3_deep":
         Xtr_c = Xtr_o.reshape(len(Xtr_o), 4, 30); Xte_c = Xte_o.reshape(len(Xte_o), 4, 30)
-        m, dev = _train(make_storm(), Xtr_c, ytr, epochs=15)
+        m, dev = _train(make_deep1d(), Xtr_c, ytr, epochs=15)
         return _predict(m, dev, Xte_c)
     if name == "B4_struct":
         Xtr = np.hstack([Xtr_o, struct_mat(tr)]); Xte = np.hstack([Xte_o, struct_mat(te)])
         m, dev = _train(make_mlp(125), Xtr, ytr, epochs=15)
         return _predict(m, dev, Xte)
-    if name == "B5_targetaware":
+    if name == "B5_structrank":
         Xtr = np.hstack([Xtr_o, struct_mat(tr)]); Xte = np.hstack([Xte_o, struct_mat(te)])
         m, dev = _train(make_mlp(125), Xtr, ytr, epochs=20)
         return _predict(m, dev, Xte)
     raise ValueError(name)
 
 
-BASELINES = ["B0_random", "B0_gc", "B1_thermo", "B2_mlp", "B2_cnn", "B3_storm", "B4_struct", "B5_targetaware"]
+BASELINES = ["B0_random", "B0_gc", "B1_thermo", "B2_mlp", "B2_cnn", "B3_deep", "B4_struct", "B5_structrank"]
 
 tr = df[df["split"] == "train"].reset_index(drop=True)
 te = df[df["split"] == "test"].reset_index(drop=True)
