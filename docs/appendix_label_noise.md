@@ -85,5 +85,45 @@ On the **independent, ~4x larger virus-target set (n=22 vs 6)**, the sequence mo
 documented at n=6 is therefore **not a small-sample artifact** — it generalizes. Human-TF targets remain
 the label-limited, ≈-random source, so the pooled top-1 remains TF-dominated (unchanged conclusion in A).
 
-Outputs: `external/beacon_prs/beacon_target_mapping.csv`, `processed/a1_virus_robustness_n23.json`,
-scripts `src/a1_map_target.py`, `src/a1_validate.py`, `src/a1_diag.py`, `src/a1_virus_rob.py`.
+### D.5 Authoritative full-target attribution (GSE149225): attribution 41.3% -> 100%
+
+The trigger-based route above is conservative: BEACON mirrors only expose ON/OFF/ON_OFF, so exact
+30-mer matches capped attribution at 41.3%. The authoritative **GSE149225** processed datafile
+(Angenent-Mari et al. 2020, "A deep learning approach to programmable RNA switches", Nat Commun
+11:5057) carries `source_sequence` (the target) and `sequence_id` per oligo and covers all 23 viral
+genomes + 906 human TFs. Every BEACON 148-mer contains its own `on_id`/`off_id` as a contiguous
+substring. Mapping by that substring gives:
+
+- **Attribution: 91,534 / 91,534 = 100%** (was 41.3% trigger-based).
+- Category counts: **virus 40,824 rows / 23 targets**; **TF 47,005 rows / 905 sources**; random 3,705.
+- **Virus test targets: 23 (4,003 test rows)** — up from n=6 (and n=22/23 trigger-based).
+- **Cross-validation**: on the 37,234 rows the independent trigger method already attributed, the
+  authoritative map agrees **100%** on category and **100%** on exact virus target — the two methods
+  are consistent, so this is not fabricated attribution.
+
+Output files:
+`external/gse149225/GSE149225_toehold_processed_datafile.csv.gz` (17.5 Mb, GEO supplementary),
+`external/beacon_prs/beacon_authoritative_mapping.csv` (91,534 rows),
+`processed/a1_authoritative_attribution.json`,
+`processed/a1_virus_robustness_authoritative_n23.json`,
+scripts `src/a1_geo_download.py`, `/tmp/a1_geo_map_prod.py`, `/tmp/a1_geo_validate_rob.py`.
+
+### D.6 Authoritative virus-group robustness (n=23, full test set, 4,003 rows)
+
+Same scale-free per-target Spearman (scale-invariant; labels unchanged from D.2). Bootstrap CI over
+the 23 virus targets. File `processed/a1_virus_robustness_authoritative_n23.json`:
+
+| method | mean rho | 95% CI | % targets rho>0 |
+|---|---|---|---|
+| B0 random | -0.019 | [-0.064, +0.024] | 52% |
+| B0 rule (GC) | -0.104 | [-0.172, -0.044] | 26% |
+| **B2 MLP average** | **+0.127** | **[+0.077, +0.181]** | **87%** |
+
+### D.7 Conclusion (final, supersedes D.4)
+On the **authoritative n=23 virus-target set** (4,003 test rows vs the original n=6), the sequence
+model ranks targets **significantly positively** (mean rho = +0.127, 95% CI **[+0.077, +0.181], excludes 0**,
+87% of targets positive), while **random is at chance** (CI straddles 0) and **GC ranks negatively**. The
+virus-group utility signal documented at n=6 is robust and generalizes to the full independently
+labeled virus-target set — **not a small-sample artifact**. Human-TF targets remain label-limited, so the
+pooled top-1 stays TF-dominated (unchanged conclusion in A). Attribution is now fully authoritative
+(100%), not a coverage estimate.

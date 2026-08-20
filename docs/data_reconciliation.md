@@ -51,15 +51,24 @@ Two sources of the 91,534-scale dataset with sequences were located and preserve
   ρ=0.458 — demonstrating the full 91,534 set runs as a sequence-mapped task (see `src/beacon_full_baseline.py`
   and `processed/p1_fullset_beacon91k.json`).
 
-**Attribution caveat (honest):** the BEACON 91,534 is a *re-processed* version of the Angenent-Mari data with a
-*different* label normalization than the official npz (value-level ON match ≈57%, OFF ≈36%), and its sequences
-include random controls. Only ~37.7k of its records can be attributed to a virus/TF target by trigger matching
-(41%). Therefore:
+**Attribution caveat (honest) — RESOLVED (2026-08-20):** the BEACON 91,534 is a *re-processed* version
+of the Angenent-Mari data with a *different* label normalization than the official npz (value-level ON match
+≈57%, OFF ≈36%). Earlier trigger-based attribution of these records capped at ~37.7k (41%). This was a
+*target-vocabulary coverage* limit, not a fundamental one: the BEACON library targets 23 viruses + 906 human
+TFs, but only the 23-virus + subset-of-TF triggers existed in our 97k-trigger canonical vocabulary.
+
+**Definitive fix delivered:** the authoritative GEO deposit **GSE149225** (`GSE149225_toehold_processed_datafile.csv.gz`,
+Angenent-Mari et al. 2020) carries `source_sequence` (target) + `sequence_id` per oligo for the full library.
+Every BEACON 148-mer contains its own `on_id`/`off_id` as a contiguous substring. Mapping by that substring
+**(`external/beacon_prs/beacon_authoritative_mapping.csv`)** attributes **all 91,534 rows (100%)** to their target
+(virus 40,824 rows / 23 targets; TF 47,005 / 905 sources; random 3,705), with test virus **23 targets / 4,003 rows**
+(up from n=6). Cross-validated against the independent 30-mer trigger method: 100% category + 100% exact virus
+target agreement on the overlap. Therefore:
   - The **sequence-mapped ≥70k gate is satisfied** by the BEACON 91,534 PRS set, runnable end-to-end as a
-    sequence-level activity-prediction task.
-  - The **target-aware design benchmark** (virus/TF targets, ranking trigger designs per target) remains on the
-    **52,861** target-attributable records, which is the upper bound of records attributable to a target in the
-    primary file.
+    sequence-level activity-prediction task, **and now fully target-attributable (100%)**.
+  - The **target-aware design benchmark** (virus/TF targets, ranking trigger designs per target) can now use the
+    full 91,534 across 23 virus + 905 TF targets; the primary-file canonical set remains 52,861 paired records
+    with independent labels (`processed/a1_authoritative_attribution.json`).
 
 ## 4. Reconstruction path to ≥70k sequence-mapped paired records (required external action)
 To reach ≥70k with sequence mapping, one of the following is required:
