@@ -43,8 +43,19 @@ QC: paper's Supplementary Table S1 selects QC2 as final filter (91,534 = QC2 pai
 
 ## 4. Experiments & findings
 ### E1 — Prediction ≠ Design
-Best prediction (B1_thermo ρ=0.136) ≠ best designer (B2_mlp success@1=0.350). Under source-disjoint
-split all models have low prediction ρ (~0.1) yet design utility has headroom (0.35 vs random 0.24).
+Prediction quality and design utility rank models **inconsistently** (see unified table, P4/T5): the
+single-seed MLP (B2_mlp ρ=0.110) is not the best designer (success@1=0.350) despite being a strong
+predictor, and the thermodynamic composite (B1_thermo ρ=0.136) is comparable at success@1 (0.343). Under
+source-disjoint split all models have low absolute prediction ρ (~0.1) yet design utility has headroom
+(0.35 vs random 0.24).
+
+**Protocol audit (self-correcting, Appendix D.10):** the apparent "thermo beats DL" reading is
+protocol-dependent. With the standard 20-epoch / 5-seed ensembling, the MLP reaches pooled ρ=0.274 —
+2× the thermo composite (0.136) — and the MLP learns an MFE-like structure signal from sequence
+(corr +0.37 with MFE switch features, ≈0 with salis_onoff), with no overfitting gap under source
+isolation (train 0.238 / test 0.274). We therefore do **not** claim "thermo is the best predictor"; we
+claim that prediction ρ and per-target top-K design utility rank methods inconsistently, and that
+evaluator/protocol choice materially changes the answer (reinforced by E6).
 
 ### E2 — Split stress
 Row-random split leaks 99.9% of test sources (vs 0.000 source-disjoint). The simple MLP's test ρ is *not*
@@ -69,6 +80,12 @@ Per R1-only evidence, we claim a *source-isolated fused-context candidate-site r
 We do NOT claim real trans sensing, de-novo redesign, or specificity (OFF = no-cognate leak). The fused→
 full-target transfer gap motivates R2 (external full-target evaluation) and, ultimately, P1 prospective
 validation as the only route to de-novo design claims.
+
+**Virus-group robustness (Appendix D.5–D.9):** the benchmark's virus target set is expanded from the
+original n=6 to the authoritative n=23 (GSE149225 full-library target map; 100% attribution), and the
+virus ranking signal is significant by **both** target-resampling bootstrap (MLP mean ρ=+0.127, 95% CI
+[+0.077, +0.181]) and within-target label permutation (p=0.0002, 5,000 permutations) — not a small-sample
+or label-shuffling artifact. Random ranks at chance and GC negatively (negative control).
 
 ## 6. Availability
 Static versioned release: `canonical_records.parquet`, `split_manifests`, `runner.py`, metrics module with
