@@ -151,7 +151,7 @@ def main():
                     wtr = (1.0 / tr.groupby("target_id")["record_id"]
                            .transform("count")).values
                     m = lgb.LGBMRegressor(n_estimators=300, verbose=-1,
-                                          random_state=20260821, **cfg)
+                                          random_state=20260821, n_jobs=8, **cfg)
                     m.fit(Xtr, ytr, sample_weight=wtr)
                     sc = m.predict(Xva)
                     scores.append(mean_ndcg(va["target_id"].values, yva, sc))
@@ -166,7 +166,7 @@ def main():
             Xte = feat_matrix(name, te_rows, bio_test)
             for seed in SEEDS:
                 m = lgb.LGBMRegressor(n_estimators=300, verbose=-1,
-                                      random_state=seed, **best_cfg)
+                                      random_state=seed, n_jobs=8, **best_cfg)
                 m.fit(Xtr, y_train, sample_weight=w_train)
                 sc = m.predict(Xte)
                 all_preds.append(pd.DataFrame({

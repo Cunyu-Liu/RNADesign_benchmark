@@ -53,7 +53,7 @@ def variant_masks(constructs):
     variable = (arr != arr[0]).any(axis=0)  # positions varying across rows
     m = {v: np.zeros(LEN, dtype=bool) for v in
          ("trigger_only", "rc_copy_only", "trigger_and_rc", "scaffold_only",
-          "template_var", "full_construct")}
+          "template_var", "full_construct", "segment_shuffle")}
     m["trigger_only"][3:33] = True
     m["rc_copy_only"][53:83] = True
     m["trigger_and_rc"][3:33] = True
@@ -63,6 +63,7 @@ def variant_masks(constructs):
     m["scaffold_only"][53:83] = False
     m["template_var"] = variable
     m["full_construct"][:] = True
+    m["segment_shuffle"][:] = True  # shuffle handled in encode_constructs
     return m, variable
 
 
