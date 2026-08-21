@@ -22,7 +22,16 @@ if [ ! -s "$CSV" ]; then
   curl -sL -o "$CSV" \
     "https://media.githubusercontent.com/media/lrsoenksen/CL_RNA_SynthBio/master/data/Toehold_Dataset_Final_2019-10-23.csv"
 fi
-echo "sha256 check:"; sha256sum "$CSV"
+want_csv="1b3aec89aa4d06f467187ebc68ee895057e3d2999b373e16a17b56c503999f31"
+if command -v shasum >/dev/null 2>&1; then
+  got_csv=$(shasum -a 256 "$CSV" | awk '{print $1}')
+else
+  got_csv=$(sha256sum "$CSV" | awk '{print $1}')
+fi
+if [ "$got_csv" != "$want_csv" ]; then
+  echo "dataset digest mismatch: expected $want_csv, got $got_csv" >&2
+  exit 1
+fi
 
 # 2) Official QC2 labels (91,534 x [ON, OFF, ON/OFF]) — GitHub model input
 NPZF="$NPZ/scaling_data.npz"
@@ -53,7 +62,10 @@ for name_md5 in "train.csv adbe31a6eba54044069e9548385ad834" "val.csv c49cf21770
     curl -sL -o "$BP/$f" "https://huggingface.co/datasets/jiahaozhang2003/beacon-programmable-rna-switches/resolve/main/$f"
   fi
   got=$(md5 -q "$BP/$f" 2>/dev/null || md5sum "$BP/$f" | awk '{print $1}')
-  echo "$f md5: $got (expect $want)"
+  if [ "$got" != "$want" ]; then
+    echo "$f digest mismatch: expected $want, got $got" >&2
+    exit 1
+  fi
 done
 
 # 5) (optional) reference genomes/transcripts are fetched on demand by
@@ -64,4 +76,4 @@ ls -la "$RAW" "$EXT" "$NPZ"
 echo
 echo "Next: python src/build_canonical_final.py   # rebuild canonical_records.parquet"
 echo "      python src/p2_build.py                # splits + leakage + oracle"
-echo "      python src/p3_baselines.py            # 6 families (reproducible, seed 0)"
+echo "      bash scripts/run_v02.sh               # corrected multi-seed core analyses"

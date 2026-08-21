@@ -4,16 +4,19 @@ Deliverables: split_manifests.json, leakage_report.html, oracle_sanity.json,
 metric unit test run. GO gate: source overlap = 0; metric tests pass.
 """
 import json
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, "/home/cunyuliu/ToeholdDesignBench/src")
+sys.path.insert(0, os.path.dirname(__file__))
 from metrics.metrics import success_at_k, ndcg_at_k, mean_with_ci  # noqa: E402
 
-CANON = "/mnt/cunyuliu/ToeholdDesignBench/processed/canonical_records.parquet"
-OUT = "/mnt/cunyuliu/ToeholdDesignBench/processed"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TD_ROOT = os.environ.get("TD_BENCH_ROOT", os.path.join(PROJECT_ROOT, "data"))
+OUT = os.environ.get("TD_BENCH_PROCESSED", os.path.join(TD_ROOT, "processed"))
+CANON = os.path.join(OUT, "canonical_records.parquet")
 
 df = pd.read_parquet(CANON)
 # use paired-labeled records (final ON/OFF both present)

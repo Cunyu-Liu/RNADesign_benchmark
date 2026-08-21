@@ -1,4 +1,7 @@
-# Gate 0 Decision Memo (O0-08)
+# Gate 0 Decision Memo v0.1 (archived)
+
+> Historical decision record. Its completion status and numerical results were
+> superseded by `task_contract_v0.2.md`; do not use this memo as current evidence.
 
 Project: ToeholdDesignBench — Target-aware Toehold Sensor Design Benchmark
 Date: 2026-08-19

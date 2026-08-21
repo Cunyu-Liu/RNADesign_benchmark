@@ -1,4 +1,6 @@
-"""P4 E3: fused -> trans/full-target transfer (external validity of the 91k dataset).
+"""Legacy v0.1 transfer analysis retained for audit only.
+
+Use ``vista_paired_context.py`` for the controlling v0.2 paired analysis.
 
 Train a sequence->ON_OFF model on the fused 91k (30-nt), apply to the VISTA mCherry
 full-target set (189 x 36-nt tiles, truncate to 30), and measure transfer Spearman rho

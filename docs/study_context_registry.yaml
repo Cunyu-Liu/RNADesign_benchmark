@@ -1,5 +1,5 @@
 # Study context registry (Gate 0, ToeholdDesignBench)
-version: 0.1
+version: 0.2
 studies:
   angenent2020:
     citation: "Angenent-Mari NM et al. Nat Commun 11:5057 (2020)"
@@ -23,6 +23,7 @@ studies:
     window: 30nt_trigger
     sliding_stride_nt: {virus: 5, human_TF: 10}
     label_columns: [ON, OFF, ON_OFF]
+    label_semantics: "ON_OFF = signed ON minus OFF"
     qc_columns: [QC_ON, QC_OFF, QC_ON_OFF]
     computational_proxies: [SalisLabON, SalisLabOFF, SalisLabONOFF, mfe_seq_*]
     license: CC_BY_4.0
@@ -34,14 +35,28 @@ studies:
     approximate_size: ~168_free_trigger_sequences
     notes: small free-trigger set; assay differs from fused
 
+  beacon2024_reprocessed_angenent:
+    citation: "Ren et al. NeurIPS Datasets and Benchmarks (2024)"
+    role: R2_source_reconstruction
+    trigger_context: fused
+    sequence_length_nt: 148
+    record_count: 91534
+    sources:
+      viral_genomes: 23
+      human_TFs: 905
+      random_pooled_groups: 1
+    label_columns: [ON, OFF, ON_OFF]
+    label_semantics: "BEACON-normalized; separate from canonical signed ON minus OFF"
+    evaluation_tracks: [source_disjoint_mixed, TF_to_virus_domain_OOD]
+
   toehold_vista_2026:
     citation: "Robson JM & Green AA. NAR 54(4):gkag097 (2026)"
     doi: "10.1093/nar/gkag097"
-    role: R2_key_external_full_target
+    role: R3_single_target_paired_context_stress_test
     trigger_context: truncated_and_full_length_target
     architecture: series-A-36nt
     reporter: mCherry
     target: mCherry_tiles
-    approximate_size: ~200_mCherry_tiles
-    label_columns: [OFF_AVG, ON_AVG_Truncated, ON_AVG_Full, ON_OFF_Full]
-    notes: SARS-CoV-2 prospective validation available in paper
+    site_count: 189
+    label_columns: [ON_OFF_Truncated, ON_OFF_Full]
+    notes: "one target and one study; site bootstrap is not cross-target uncertainty"

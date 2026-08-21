@@ -1,60 +1,112 @@
-# ToeholdDesignBench — Target-aware Toehold Sensor Design Benchmark
+# ToeholdDesignBench
 
-A source-isolated, target-level, design-utility benchmark for prokaryotic translation-activating
-toehold RNA sensors. It reframes the Angenent-Mari 2020 (91,534 paired ON/OFF) dataset from a
-single-sequence regression task into a **per-target top-K candidate-selection problem**.
+ToeholdDesignBench evaluates toehold-switch candidate prioritization at the
+target level. Its central question is whether a method can rank candidates for an
+unseen target under a fixed experimental budget—not merely predict pooled assay
+values for individual rows.
 
-Frozen task: given a full target RNA + fixed first-gen-30nt architecture + submission budget K,
-rank candidate trigger sites so the top-K contains high-ON / low-OFF, grammar-valid switches —
-without access to test labels.
+The controlling protocol is the consolidated
+[task contract v0.2.1](docs/task_contract_v0.2.1_consolidated.md). The v0.2
+contract and v0.2.1 statistical addendum remain as change-history records.
+Older reports and scripts remain available for audit, but their numerical results
+must not be used in the revised manuscript.
 
-## Repository layout
-- `/home/cunyuliu/ToeholdDesignBench` — code (`src/`, `tests/`, `docs/`)
-- `/mnt/cunyuliu/ToeholdDesignBench` — data (`raw/`, `processed/`, `external/`), symlinked as `data/`
+## Evidence tracks
 
-## Dependencies
-conda env `toeholdbench` (Python 3.10, pandas, pyarrow, numpy, scikit-learn, scipy, torch 2.5+cu121).
-Reproduce: `conda create -n toeholdbench --clone editflow` (or install per `requirements.txt`).
-Data paths can be overridden with `TD_BENCH_PROCESSED=/path/to/processed` (see src/runner.py).
+The release keeps three label systems separate:
 
-## Data pipeline (automatic download)
+- **Canonical main track:** 52,861 paired records from 926 label-bearing targets
+  (the retained canonical table has 931 targets), signed `ON - OFF`, fixed
+  target/source-disjoint split, success@K plus rank utility.
+- **BEACON reconstruction:** 91,534 rows from 23 virus and 905 TF sources,
+  BEACON-normalized `ON_OFF`, evaluated with a newly built source-disjoint split
+  and TF-to-virus domain OOD. Its published row split is not used to claim
+  unseen-target generalization.
+- **VISTA context stress test:** 189 paired truncated/full measurements from one
+  mCherry target. This is a single-target external context analysis, not evidence
+  of general cross-target transfer.
+
+These tracks are not merged into one label scale.
+
+## Methods and metrics
+
+The repository contains random, GC, thermodynamic, MLP, CNN, deeper CNN, and two
+local sequence-plus-biophysical baselines. The latter learned models are
+representative local baselines, not full reproductions of named published design
+systems. Learned canonical baselines use seeds 0–4 and report the mean predicted
+score.
+
+The canonical primary metric is success@1 under the frozen threshold ON ≥ 0.5
+and OFF ≤ 0.5. Secondary metrics are success@3/5, NDCG@10, normalized regret@10,
+and global Pareto-front coverage@10. Targets—not candidate rows—are the
+uncertainty and paired-comparison unit. The report always includes targets for
+which no threshold-qualified candidate exists.
+
+## Installation and data paths
+
+Python 3.10+ and the packages in `requirements.txt` are required. For example:
+
 ```bash
-# 1) download public raw assets (Angenent-Mari CSV, official QC2 npz, VISTA external) into ./data
+python -m pip install -r requirements.txt
+```
+
+By default, scripts read `./data` and `./data/processed`. External locations can
+be selected without editing code:
+
+```bash
+export TD_BENCH_ROOT=/path/to/ToeholdDesignBench-data
+export TD_BENCH_PROCESSED="$TD_BENCH_ROOT/processed"
+```
+
+Public raw files can be downloaded with:
+
+```bash
 bash scripts/download_data.sh
-# 2) build canonical records (coordinate reconstruction uses NCBI efetch, cached in processed/sequences)
-python src/build_canonical_final.py
-# 3) splits + leakage + oracle/random sanity
-python src/p2_build.py
-# 4) reproducible baselines (seed=0, torch seeded before model init) and experiments E1-E6
-python src/p3_baselines.py
-python src/p4_experiments.py
 ```
-> Data disclosure: the sequence-mapped paired canonical set is 52,861 records (of the paper's 91,534
-> official paired labels, preserved in `raw/npz/scaling_data.npz` but not sequence-mappable). See
-> `docs/data_reconciliation.md` for the full accounting and the reconstruction path to ≥70k.
 
-## Quick reproduction
+The core v0.2 run also requires the prepared canonical parquet, frozen split
+manifest, authoritative BEACON source mapping, and VISTA workbook listed by
+`scripts/run_v02.sh`. The data release must place those derived artifacts at the
+paths checked by that script. The VISTA workbook's redistribution status is not
+assumed; the download instruction is supplied instead.
+
+## One-command core reproduction
+
+From the repository root, after preparing the data directory:
+
 ```bash
-cd /home/cunyuliu/ToeholdDesignBench
-# metric unit tests (incl. bootstrap CI and runner integration)
-python tests/test_metrics.py && python tests/test_extended.py
-# evaluate a built-in baseline
-python src/runner.py --method B1_thermo
-# evaluate an external submission (record_id,score CSV)
-python src/runner.py --method my_method --scores my_scores.csv
+bash scripts/run_v02.sh
 ```
 
-## Key results (source-disjoint split, seed=0)
-- Prediction correlation (Spearman ρ) and design utility (success@1) rank models inconsistently (E1).
-- Row-random split leaks 99.9% of test sources (source-disjoint = 0%); source-disjoint is mandatory (E2).
-- OFF-only ranking is unsuitable; ON/ratio/Pareto are far stronger (E5).
+This entry runs the focused tests, five-seed canonical baselines, group
+robustness summaries, corrected E1/E2/E4/E5/E6 analyses, BEACON source-disjoint
+tracks, the paired VISTA stress test, a built-in runner example, and provisional
+paper tables/figures with source-data CSVs and alt text. Paper-facing outputs are
+written to `TD_BENCH_PROCESSED` with `_v02` in their names.
 
-## Provenance / versioning
-- `processed/hash_manifest.json` — sha256 of canonical artifacts.
-- `processed/license_matrix.csv`, `processed/exclusion_ledger.csv` — data governance.
-- `docs/study_context_registry.yaml` — assay/reporter/host/context registry.
+To evaluate a user-supplied canonical score file:
 
-## Allowed claims (per evidence)
-R1 only ⇒ "source-isolated fused-context candidate-site ranking benchmark". R1+R2 ⇒ cross-context
-target-aware prioritization. R1+R2+P1 ⇒ prospective hit-rate comparison (requires wet-lab).
-Forbidden: "first AI toehold design", "first target-aware method", "OFF low ⇒ specific", circular validation.
+```bash
+python src/runner.py \
+  --method my_method \
+  --scores my_scores.csv \
+  --out "$TD_BENCH_PROCESSED/my_method_v02"
+```
+
+The CSV must contain exactly one finite `score` for every test `record_id`.
+
+## Result status
+
+The v0.1 result narratives in `docs/p3_baseline_report.md`, `docs/p4_report.md`,
+and `docs/paper_draft.md` are archived. Do not copy their numbers into a
+manuscript. The corrected manuscript is
+[`docs/manuscript_v0.2.1.md`](docs/manuscript_v0.2.1.md) and uses only the final
+v0.2.1 result package.
+
+## Claim boundary
+
+The current evidence can support a source-isolated candidate-ranking benchmark,
+a BEACON domain-shift analysis, and a single-target paired context stress test.
+It cannot establish universal full-target transfer failure, biochemical
+specificity, de novo design validity, or prospective hit rate. Those claims
+require broader external targets or new wet-lab evidence.

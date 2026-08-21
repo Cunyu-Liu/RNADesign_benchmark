@@ -1,9 +1,9 @@
 # Pollution statement (benchmark governance, §13)
 
-Date: 2026-08-20 · Version 0.1.1
+Date: 2026-08-21 · Version 0.2
 
 ## Model / data exposure
-- All baselines reported in P3/P4 are trained from scratch in this repository on the benchmark's canonical
+- All v0.2 baselines are trained from scratch in this repository on the benchmark's canonical
   data (split into train/val/test; test never used for fitting). No baseline was pre-trained on the
   benchmark's test sequences, and none was tuned on test labels.
 - `B1_thermo` uses thermodynamic proxy features (RBS-calculator `SalisLab*`, ViennaRNA `mfe_seq_*`) that ship
@@ -18,6 +18,8 @@ Date: 2026-08-20 · Version 0.1.1
 - The source-disjoint split guarantees no target (and hence no adjacent sliding-window) crosses train/test
   (verified overlap = 0; row-random split leaks 99.9% and is explicitly non-standard).
 - The VISTA mCherry external set (E3) was downloaded but its labels were never used to select models.
+- The BEACON source-disjoint manifest is rebuilt from source identity; its official
+  row split is retained only as a diagnostic and is not the unseen-target test.
 
 ## Known caveats / contamination risks
 - The 91,534 official QC2 labels (npz) overlap the CSV labels (42,189 exact triple matches); they are the
@@ -27,5 +29,5 @@ Date: 2026-08-20 · Version 0.1.1
   source-disjoint split and, for future work, a hidden/external target set.
 
 ## Versioning & submission limits
-- Benchmark version 0.1.1; static sealed test (no live leaderboard yet; no submission-count limit enforced).
+- Benchmark version 0.2; static sealed test (no live leaderboard yet; no submission-count limit enforced).
   A public leaderboard, if added, must enforce submission limits and version pinning.

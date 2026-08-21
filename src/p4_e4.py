@@ -1,4 +1,8 @@
-"""P4 E4: target-context ablation (seeded). seq-only vs seq+structure vs target-aware."""
+"""Legacy v0.1 analysis retained for audit only.
+
+It does not contain full-target context.  Use the local-feature comparison in
+``revision_analysis.py`` and label it accordingly.
+"""
 import json
 import sys
 

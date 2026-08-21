@@ -1,5 +1,23 @@
 # ToeholdDesignBench — run log (FIX-5 governance)
 
+## 2026-08-21 — v0.2 reviewer-driven revision (local validation)
+
+- Controlling protocol: `docs/task_contract_v0.2.md`.
+- Corrected metric, channel-encoding, runner, multi-seed, BEACON, and VISTA
+  scripts were syntax-checked locally.
+- `tests/test_metrics.py`: PASS.
+- `tests/test_extended.py`: PASS.
+- `docs/leaderboard_schema.json` and `docs/study_context_registry.yaml`: parsed.
+- Synthetic v0.2 result-to-paper boundary test: PASS, including missing-result
+  rejection and opaque RGB figure export.
+- Provisional figures were opened and visually inspected at the declared 180 mm
+  width. PNG metadata passed RGB/no-alpha/effective-DPI checks; the vector PDF
+  had the expected page size and embedded font resource. Palette colors passed
+  the white-background contrast screen; method labels and marker shapes provide
+  redundant encodings where grayscale separation is weak.
+- Full GPU/data execution has not yet been recorded here. Old numerical sections
+  below are historical and must not be used in the v0.2 manuscript.
+
 ## 2026-08-20 — strict-acceptance remediation re-runs (v0.1.1)
 
 ### P2 (absolute threshold) — `src/p2_build.py`

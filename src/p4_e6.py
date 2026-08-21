@@ -1,4 +1,7 @@
-"""P4 E6 (R1-appropriate): cross-evaluator / proxy-overfitting audit.
+"""Legacy v0.1 analysis retained for audit only.
+
+Low evaluator agreement does not establish proxy overfitting.  Use the explicitly
+scoped evaluator-disagreement result in ``revision_analysis.py``.
 
 For ranking, 'reward/evaluator circularity' reduces to: does a model's top-K, judged by
 itself, survive judgment by an independent evaluator (a different model, or the real label)?

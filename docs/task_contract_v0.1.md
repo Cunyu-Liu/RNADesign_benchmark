@@ -1,4 +1,8 @@
-# ToeholdDesignBench Task Contract v0.1 (O0-06)
+# ToeholdDesignBench Task Contract v0.1 (archived)
+
+> Historical document only. The controlling contract is
+> [`task_contract_v0.2.md`](task_contract_v0.2.md). Results and claims below have
+> not been updated to the corrected v0.2 protocol.
 
 Gate 0 deliverable. Freezes the R1/R2/P1 task definitions, inputs, outputs, boundaries and metrics
 derived from the project execution contract (Target-aware Toehold Sensor Design Benchmark, v0.1, 2026-08-19).

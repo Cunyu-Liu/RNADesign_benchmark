@@ -1,21 +1,22 @@
 """P1-5: final canonical dataset build with absolute coordinates + provenance artifacts.
 
 Reorder: reuse resolved accessions, re-map triggers recording (window_start, window_end, strand),
-then emit canonical_records.parquet + license_matrix + exclusion_ledger + hash_manifest.
+then emit canonical_records.parquet + license_matrix + exclusion_ledger.
 Sequences are cached to disk to avoid re-downloads.
 """
-import hashlib
 import json
 import os
 import subprocess
 
 import pandas as pd
 
-PARQUET = "/mnt/cunyuliu/ToeholdDesignBench/processed/canonical_pilot.parquet"
-VIRUS_ACC = "/mnt/cunyuliu/ToeholdDesignBench/processed/virus_genome_mapping_full.json"
-TF_ACC = "/mnt/cunyuliu/ToeholdDesignBench/processed/tf_mapping.json"
-SEQDIR = "/mnt/cunyuliu/ToeholdDesignBench/processed/sequences"
-OUT_DIR = "/mnt/cunyuliu/ToeholdDesignBench/processed"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TD_ROOT = os.environ.get("TD_BENCH_ROOT", os.path.join(PROJECT_ROOT, "data"))
+OUT_DIR = os.environ.get("TD_BENCH_PROCESSED", os.path.join(TD_ROOT, "processed"))
+PARQUET = os.path.join(OUT_DIR, "canonical_pilot.parquet")
+VIRUS_ACC = os.path.join(OUT_DIR, "virus_genome_mapping_full.json")
+TF_ACC = os.path.join(OUT_DIR, "tf_mapping.json")
+SEQDIR = os.path.join(OUT_DIR, "sequences")
 os.makedirs(SEQDIR, exist_ok=True)
 
 COMP = str.maketrans("ACGT", "TGCA")
@@ -112,13 +113,5 @@ ledger = [{"category": k, "n_records": v} for k, v in excl.items()]
 ledger += [{"category": "excluded_no_label (no final ON&OFF)", "n_records": int((df["admission_status"] != "admitted_paired").sum())}]
 pd.DataFrame(ledger).to_csv(f"{OUT_DIR}/exclusion_ledger.csv", index=False)
 
-# --- hash manifest ---
-mani = {}
-for f in [FINAL_PARQUET, PARQUET, f"{OUT_DIR}/coordinates.parquet",
-          "/mnt/cunyuliu/ToeholdDesignBench/raw/Toehold_Dataset_Final_2019-10-23.csv"]:
-    if os.path.exists(f):
-        mani[f] = hashlib.sha256(open(f, "rb").read()).hexdigest()
-json.dump(mani, open(f"{OUT_DIR}/hash_manifest.json", "w"), indent=2)
-
-print("license_matrix.csv, exclusion_ledger.csv, hash_manifest.json written")
+print("license_matrix.csv and exclusion_ledger.csv written")
 print("P1-5 complete")

@@ -1,4 +1,10 @@
-# P4 — main experiments (E1–E6) & red-team findings — REVISED
+# P4 — v0.1 experiments (archived; superseded by v0.2)
+
+> **Do not cite the numerical claims below.** They predate the corrected channel
+> encoding, signed-label training, matched-size split comparison, target-bootstrap
+> method differences, unconditional oracle accounting, and paired VISTA analysis.
+> `src/revision_analysis.py`, `src/beacon_target_benchmark.py`, and
+> `src/vista_paired_context.py` generate the replacement `_v02` evidence.
 
 Date: 2026-08-20 · seed=0 (torch seeded before model init) · source-disjoint split (train 648/val 138/test 140 targets) · GPU
 Success definition: **pre-registered ABSOLUTE threshold ON>=0.5 & OFF<=0.5** (test-independent; positive rate 34.3%)

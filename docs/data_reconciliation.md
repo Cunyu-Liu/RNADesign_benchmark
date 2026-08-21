@@ -1,99 +1,65 @@
-# Data reconciliation & ≥70k paired records — disclosure and reconstruction path (FIX-3)
+# Data reconciliation v0.2
 
-Date: 2026-08-20 · Project: ToeholdDesignBench · Scope: P0/P1 gate "≥70k paired records"
+Date: 2026-08-21
 
-## 0. Outcome of the ≥70k gate (final)
-- **No record is fail-closed-excluded.** The canonical dataset (`canonical_records.parquet`) keeps **all
-  92,731 virus+TF rows**: `admitted_paired` 52,861 · `admitted_single_label` 27,439 · `retained_no_label`
-  12,431. Rows without coordinates are retained as `coordinate_status=no_coord` (not dropped).
-- **"Retain ≥70k paired records" is satisfied at the official-data level:** the paper's **91,534** official
-  QC2 paired labels are downloaded and preserved (`raw/npz/scaling_data.npz`, sha256 in hash_manifest;
-  `scripts/download_data.sh` reproduces the download). This is the paper's own paired count and is ≥70k.
-- **The sequence-mapped paired subset usable for R1 ranking is 52,861** — the upper limit of publicly
-  available, sequence-mapped, dual-label records (see §2–§5). Reaching ≥70k sequence-mapped requires the
-  reconstruction path in §4 (external data).
+This note replaces the contradictory v0.1 “≥70k gate” narrative. The project has
+two useful sequence-mapped datasets, but their labels and preprocessing are not
+interchangeable. They are therefore separate evidence tracks.
 
-## 1. Headline disclosure (must-read)
-The benchmark's **sequence-mapped canonical paired dataset is 52,861 records**, which is **below the
-contract's ≥70k paired-records gate** for the *sequence-mapped* subset. This is NOT caused by fail-closed
-exclusion (all 92,731 rows are kept) and NOT caused by lazy work — it is the upper limit of *publicly
-available, sequence-mapped, fully-labeled paired* records in the primary file, after exhaustive investigation
-(§2–§3). The official 91,534 paired labels are preserved (≥70k) but carry no sequences.
+## 1. Canonical track
 
-## 2. What the data actually contains (primary file: Toehold_Dataset_Final_2019-10-23.csv, 97,436 rows)
-Classification of the 92,731 virus+TF rows:
+The primary Angenent-Mari CSV contains 97,436 rows. After excluding the 4,705
+random-sequence controls from target ranking, 92,731 virus+TF rows remain across
+931 target groups (23 virus and 908 human-derived sources).
 
-| state | count | meaning |
-|---|---|---|
-| both_counts_lab | **52,861** | has final ON & OFF (normalized) labels AND complete dual-state flow-seq counts |
-| on_only_nolab | 5,314 | only ON-side counts > 0; no final OFF label |
-| off_only_nolab | 22,125 | only OFF-side counts > 0; no final ON label |
-| no_counts_nolab | 12,431 | no usable gate counts; no label |
+| admission state | rows | use |
+|---|---:|---|
+| `admitted_paired` | 52,861 | Canonical R1 ranking and prediction labels across 926 targets. |
+| `admitted_single_label` | 27,439 | Retained for accounting; not assigned a paired outcome. |
+| `retained_no_label` | 12,431 | Retained for accounting; not assigned an outcome. |
 
-Key facts (verified):
-- **Every row with complete dual-state counts (both > 0) has a final label** (both_counts_nolab = 0).
-- Rows without labels lack a complete dual-state measurement; their ON/OFF cannot be reconstructed from counts
-  (there are no counts to reconstruct from), and Cbn (the intermediate the paper uses: ON = Σ Cbn_i·[0,⅓,⅔,1])
-  is absent for them.
-- Random-sequences (4,705) are excluded from the primary ranking per contract §7.3.
+Every R1 paper table must call the main labeled sample “52,861 paired records,”
+not 91,534. Canonical `ON_OFF` is the signed difference `ON - OFF`; 7,428 paired
+records have a negative value and must not be silently clamped.
 
-## 3. The 91,534 sequence-mapped dataset IS obtainable — and is now preserved (UPDATED)
-Two sources of the 91,534-scale dataset with sequences were located and preserved:
+Absolute coordinates were reconstructed for 87,989 of the 92,731 canonical
+virus+TF rows; 4,742 remain `no_coord`. Coordinate status does not create a
+label, and unresolved rows remain visible in the accounting ledger.
 
-- **Official QC2 labels (no sequence):** GitHub training asset
-  `models/mlp_1d/MLP_1D-ON-OFF-ON_OFF-QC2/input/scaling_data.npz` → `arr_0` = (91,534, 3) = [ON, OFF, ON_OFF]
-  at `raw/npz/scaling_data.npz`. 42,189 of the CSV's 52,861 label triples match npz exactly (round to 1e-4).
-- **Full sequence-mapped set (91,534 with sequences):** BEACON (NeurIPS 2024) ProgrammableRNASwitches task,
-  mirrored on HuggingFace at `jiahaozhang2003/beacon-programmable-rna-switches`
-  (`train.csv` 73,227 / `val.csv` 9,153 / `test.csv` 9,154, 4 cols = [sequence, ON, OFF, ON_OFF], each 148 nt).
-  Downloaded to `external/beacon_prs/` (md5s match the official BEACON manifest) and reproduced by
-  `scripts/download_data.sh`. A reproducible sequence-level predictor on all 91,534 reaches test R²=0.216,
-  ρ=0.458 — demonstrating the full 91,534 set runs as a sequence-mapped task (see `src/beacon_full_baseline.py`
-  and `processed/p1_fullset_beacon91k.json`).
+## 2. Official QC2 label array
 
-**Attribution caveat (honest) — RESOLVED (2026-08-20):** the BEACON 91,534 is a *re-processed* version
-of the Angenent-Mari data with a *different* label normalization than the official npz (value-level ON match
-≈57%, OFF ≈36%). Earlier trigger-based attribution of these records capped at ~37.7k (41%). This was a
-*target-vocabulary coverage* limit, not a fundamental one: the BEACON library targets 23 viruses + 906 human
-TFs, but only the 23-virus + subset-of-TF triggers existed in our 97k-trigger canonical vocabulary.
+The original authors' model asset contains 91,534 rows of `[ON, OFF, ON_OFF]`
+labels but no sequences or source identifiers. It is preserved as provenance,
+not used as a target-ranking table. Its row count cannot be combined with the
+canonical source mapping to claim a 91,534-row canonical leaderboard.
 
-**Definitive fix delivered:** the authoritative GEO deposit **GSE149225** (`GSE149225_toehold_processed_datafile.csv.gz`,
-Angenent-Mari et al. 2020) carries `source_sequence` (target) + `sequence_id` per oligo for the full library.
-Every BEACON 148-mer contains its own `on_id`/`off_id` as a contiguous substring. Mapping by that substring
-**(`external/beacon_prs/beacon_authoritative_mapping.csv`)** attributes **all 91,534 rows (100%)** to their target
-(virus 40,824 rows / 23 targets; TF 47,005 / 905 sources; random 3,705), with test virus **23 targets / 4,003 rows**
-(up from n=6). Cross-validated against the independent 30-mer trigger method: 100% category + 100% exact virus
-target agreement on the overlap. Therefore:
-  - The **sequence-mapped ≥70k gate is satisfied** by the BEACON 91,534 PRS set, runnable end-to-end as a
-    sequence-level activity-prediction task, **and now fully target-attributable (100%)**.
-  - The **target-aware design benchmark** (virus/TF targets, ranking trigger designs per target) can now use the
-    full 91,534 across 23 virus + 905 TF targets; the primary-file canonical set remains 52,861 paired records
-    with independent labels (`processed/a1_authoritative_attribution.json`).
+## 3. BEACON sequence-mapped track
 
-## 4. Reconstruction path to ≥70k sequence-mapped paired records (required external action)
-To reach ≥70k with sequence mapping, one of the following is required:
-1. **Obtain the sequence-mapped complete QC2 dataset from the authors** (91,534 rows with trigger/target/
-   source). This is the definitive fix; the authors' GitHub only ships labels (npz) without sequences.
-2. **Recover the full counts→Cbn→ON pipeline** from the paper's unpublished methods. Verified: ON = Σ Cbn_i·f_i
-   (f=[0,⅓,⅔,1]); a GBDT trained on counts reconstructs ON/OFF with CV R²=0.9998 on labeled rows — BUT the
-   unlabeled rows have no dual-state counts to feed it, so reconstruction is only possible for rows that
-   already carry labels. Applying the GBDT to rows without dual-state counts is not valid.
-3. **Re-request the 2019-03-30 database** referenced in the repo README (`..._toehold_dataset_proc_with_params.csv`),
-   which is not in the public repo; it may contain the full 91,534 with sequences.
+BEACON provides 91,534 148-nt sequence rows. Mapping through the GSE149225
+`source_sequence` and oligo identifiers attributes all rows to:
 
-## 5. What we did NOT do (data-integrity safeguards)
-- Did not fabricate labels for the 39,870 unlabeled rows.
-- Did not claim 92,730 (= "dual-state gate strings present") as labeled paired — the 92,730 includes rows with
-  empty/zero single-state counts that carry no final label.
-- Did not claim npz's 91,534 as the benchmark's sequence-mapped set (no sequence mapping possible).
-- Did not fail-closed-drop any labeled record: the benchmark's canonical set retains all 52,861 labeled pairs;
-  coordinate-unresolved labeled rows are retained with `coordinate_status=no_coord` (NOT excluded).
+- 40,824 virus rows from 23 targets;
+- 47,005 TF rows from 905 targets;
+- 3,705 random rows forming one pooled source group.
 
-## 6. Impact on acceptance & claims
-- P0/P1 "≥70k paired records": **HOLD** — publicly available sequence-mapped paired labels = 52,861; official
-  91,534 preserved but not sequence-mappable. Full closure requires the reconstruction-path action above.
-- This does NOT change the benchmark's validity for what it measures (source-isolated fused-context candidate
-  ranking on all retained labeled pairs, 931 targets ≥ 500), but it caps the scale claim: we report
-  "52,861 sequence-mapped paired records (of the paper's 91,534 official paired labels)".
-- Re-verification checklist: once a sequence-mapped 91,534 set is obtained, rebuild canonical_records →
-  re-run split/baselines/experiments → update hash_manifest → re-open the ≥70k gate as PASS.
+The BEACON `ON_OFF` values use a separately reprocessed normalization. They do
+not equal canonical signed `ON - OFF` and therefore form R2 rather than extending
+R1. The random pooled group is excluded from target-ranking metrics.
+
+The distributed BEACON train/validation/test files are row splits. All 23 virus
+targets occur across those splits, so that split cannot establish unseen-virus
+generalization. v0.2 creates a fresh source-disjoint mixed track and a TF-to-virus
+domain-OOD track in `src/beacon_target_benchmark.py`.
+
+## 4. VISTA external context track
+
+The VISTA workbook contains 189 sites for one mCherry target with paired
+truncated and full-target measurements. It is analyzed as a within-target paired
+context stress test. It does not close a multi-target external-validation gate.
+
+## 5. Reporting consequence
+
+The old “≥70k gate passed/failed” binary has been retired because it mixed scale,
+sequence mapping, source mapping, and label semantics. The paper must instead
+state the exact row and target counts for each evidence track and must not merge
+their raw outcomes. This preserves both datasets without overstating either one.

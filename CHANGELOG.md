@@ -2,6 +2,45 @@
 
 All notable changes to ToeholdDesignBench are documented here. Versioning follows Semantic Versioning.
 
+## [0.2.1-statistical-addendum] — 2026-08-21
+
+- Replaced a single seeded random ranking with the exact per-target expectation
+  under a uniformly random candidate permutation.
+- Added finite-bootstrap add-one correction so paper results cannot report
+  `P = 0`.
+- Preserved BEACON's published row split under an unambiguous column name and
+  added train/test target-overlap auditing.
+- Made VISTA interpretation outcome-neutral and revised the objective-alignment
+  figure title to match the observed evidence.
+- Added regression tests for exact random expectations and BEACON split-column
+  collisions.
+- Completed the full remote v0.2.1 rerun and regenerated the machine-readable
+  results, tables, vector/600-dpi figures, source data, and alt text.
+- Replaced the superseded hypothesis-driven draft with the evidence-aligned
+  `docs/manuscript_v0.2.1.md` and added a consolidated Markdown control contract.
+
+## [0.2.1-unreleased] — 2026-08-21 — reviewer-driven correctness revision
+
+- Corrected CNN nucleotide-channel layout and added a regression test that fails
+  under the historical direct reshape.
+- Preserved canonical signed `ON - OFF` labels; negative relevance is handled in
+  NDCG without clipping.
+- Replaced per-target percentiles with target-bootstrap confidence intervals and
+  paired target-bootstrap method differences.
+- Replaced within-top-K Pareto-front size with global-front coverage.
+- Added target accounting, deterministic tie-breaking, and stricter submission
+  validation to the runner; aligned the published schema.
+- Moved learned canonical baselines to seeds 0–4 and made the robustness report
+  consume those exact score files.
+- Added separate source-disjoint/domain-OOD BEACON tracks and a paired single-target
+  VISTA truncated/full stress test without merging label scales.
+- Archived v0.1 result narratives, added the controlling Markdown v0.2 task
+  contract, and replaced contradictory data-reconciliation language.
+- Added the portable `scripts/run_v02.sh` core entry. Full server results remain
+  pending at this changelog point.
+- Added a fail-closed result-to-paper artifact builder with Markdown/CSV tables,
+  source-data-backed PDF/opaque-PNG figures, alt text, and provenance metadata.
+
 ## [0.2.0] — 2026-08-20 — Publication-readiness (T1–T5 after reviewer evaluation)
 - **T1**: obtain and preserve the full 91,534 sequence-mapped PRS dataset (BEACON/NeurIPS 2024 HF mirror,
   train 73,227 / val 9,153 / test 9,154; reproducible via `scripts/download_data.sh`); reproducible ≥70k

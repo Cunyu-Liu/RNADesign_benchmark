@@ -9,8 +9,10 @@ WORKDIR /workspace/ToeholdDesignBench
 COPY src ./src
 COPY tests ./tests
 COPY requirements.txt ./
+ENV TD_BENCH_ROOT=/workspace/ToeholdDesignBench/data
+ENV TD_BENCH_PROCESSED=/workspace/ToeholdDesignBench/data/processed
 
-# Data is mounted at runtime from /mnt/cunyuliu/ToeholdDesignBench (not copied into image).
-# Run: docker run -v /mnt/cunyuliu/ToeholdDesignBench:/mnt/cunyuliu/ToeholdDesignBench \
+# Data is mounted at the repository-relative data path (not copied into image).
+# Run: docker run -v /path/to/ToeholdDesignBench-data:/workspace/ToeholdDesignBench/data \
 #        toeholddesignbench python src/runner.py --method B1_thermo
 ENTRYPOINT ["python", "src/runner.py"]

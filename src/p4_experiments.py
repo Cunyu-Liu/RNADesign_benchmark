@@ -1,4 +1,8 @@
-"""P4 v2: E1 prediction!=design, E2 split-stress (rho), E5 ratio pathology (absolute success)."""
+"""Legacy v0.1 analysis retained for audit only.
+
+Do not cite this output: E5 conditions on feasible targets and mislabels ON-OFF as
+a ratio.  The controlling v0.2 analysis is ``revision_analysis.py``.
+"""
 import json
 import sys
 

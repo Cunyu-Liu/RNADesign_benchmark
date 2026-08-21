@@ -2,12 +2,14 @@
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, "/home/cunyuliu/ToeholdDesignBench/src")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from metrics.metrics import success_at_k, ndcg_at_k, normalized_regret, pareto_front_size, mean_with_ci  # noqa: E402
+from beacon_target_benchmark import attach_source_manifest, published_split_audit  # noqa: E402
 
 
 def test_mean_with_ci_basic():
@@ -67,9 +69,44 @@ def test_runner_integration():
         out = os.path.join(tmp, "res")
         agg = runner.evaluate(df, scores, out_prefix=out)
         assert "success_at_1" in agg and "mean" in agg["success_at_1"]
+        assert "ndcg_at_10" in agg
+        assert "normalized_regret_at_10" in agg
+        assert "pareto_front_coverage_at_10" in agg
+        assert agg["target_accounting"]["n_targets"] == 2
+        assert (
+            agg["target_accounting"]["n_targets_with_feasible_candidate"]
+            + agg["target_accounting"]["n_targets_without_feasible_candidate"]
+            == 2
+        )
         # files written
         assert os.path.exists(out + "_per_target.csv")
         assert os.path.exists(out + "_scores.csv")
+
+
+def test_beacon_manifest_keeps_published_and_target_splits_distinct():
+    data = pd.DataFrame({
+        "source_sequence": ["target_a", "target_a", "target_b", "target_b"],
+        "category": ["TF", "TF", "virus", "virus"],
+        "sequence": ["ACGT", "CGTA", "TGCA", "GCAT"],
+        "split": ["train", "test", "train", "test"],
+    })
+    manifest = pd.DataFrame({
+        "target_id": ["beacon_target_0000", "beacon_target_0001"],
+        "source_sequence": ["target_a", "target_b"],
+        "category": ["TF", "virus"],
+        "split": ["test", "train"],
+    })
+    merged = attach_source_manifest(data, manifest)
+    assert merged["published_row_split"].tolist() == ["train", "test", "train", "test"]
+    assert merged["split"].tolist() == ["test", "test", "train", "train"]
+    assert merged["target_id"].tolist() == [
+        "beacon_target_0000", "beacon_target_0000",
+        "beacon_target_0001", "beacon_target_0001",
+    ]
+    assert not any(column.endswith(("_x", "_y")) for column in merged.columns)
+    audit = published_split_audit(merged)
+    assert audit["TF"]["test_target_overlap_fraction"] == 1.0
+    assert audit["virus"]["test_target_overlap_fraction"] == 1.0
 
 
 if __name__ == "__main__":
@@ -81,4 +118,5 @@ if __name__ == "__main__":
     test_regret_constant()
     test_pareto_empty()
     test_runner_integration()
+    test_beacon_manifest_keeps_published_and_target_splits_distinct()
     print("all extended metric + runner tests passed")

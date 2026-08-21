@@ -1,4 +1,13 @@
-# ToeholdDesignBench: A Target-Aware, Source-Isolated Benchmark for Toehold RNA Sensor Design Utility
+# ToeholdDesignBench manuscript v0.1 (archived draft)
+
+> **Superseded on 2026-08-21. Do not submit or quote numerical results from this
+> file.** The draft contains results produced before the v0.2 correctness and
+> evidence-scope revision. A new manuscript will be written from the `_v02`
+> result package only.
+
+## Archived title
+
+ToeholdDesignBench: A Target-Aware, Source-Isolated Benchmark for Toehold RNA Sensor Design Utility
 
 *(paper draft — P5 deliverable; figures/tables reference the processed/ JSON artifacts)*
 
