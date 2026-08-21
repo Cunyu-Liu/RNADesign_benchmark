@@ -38,7 +38,7 @@ CANON_PARQUET = f"{MNT}/processed/canonical_records.parquet"
 SEQDIR = f"{MNT}/processed/sequences"
 BEACON_AUTH = f"{MNT}/external/beacon_prs/beacon_authoritative_mapping.csv"
 LEGACY_SPLIT = f"{MNT}/processed/split_manifests.csv"
-OUT_DIR = f"{MNT}/runs/v0.3.0/registry"
+OUT_DIR = f"{MNT}/runs/v0.3.0/registry_v3"
 
 STUDY_ID = "angenent_mari_2020"
 SEED = 20260821
@@ -430,6 +430,15 @@ def seed_homology(canon, contexts, uf, acc_of):
 # 3. 5-fold group-stratified outer split (+ inner 3-fold)
 # ---------------------------------------------------------------------------
 def make_splits(canon, uf, cluster_of):
+    """Balanced k-fold partition of clusters (never splitting a cluster).
+
+    Greedy largest-first: each cluster goes to the fold with the fewest
+    resulting targets; ties broken by the largest category deficit for the
+    cluster's composition, then the smallest candidate pool, then seeded
+    jitter. This guarantees near-exact target-count balance regardless of
+    pool sizes (a pool-deviation cost would instead pile early large pools
+    into whichever fold first approached the pool target).
+    """
     targets = sorted(canon["target_id"].unique())
     cat_of = canon.groupby("target_id")["source_category"].first().to_dict()
     pool_of = canon.groupby("target_id").size().to_dict()
@@ -442,40 +451,47 @@ def make_splits(canon, uf, cluster_of):
 
     cats = sorted(set(cat_of.values()))
     N = len(targets)
-    total_pool = sum(pool_of.values())
+    cat_totals = {c: sum(1 for t in targets if cat_of[t] == c) for c in cats}
 
-    fold_stats = {f: {"n": 0, "pool": 0, "cat": {c: 0 for c in cats}}
-                  for f in range(N_OUTER)}
-    fold_of = {}
+    def balanced_assign(cluster_list, n_folds, rng, cat_scope):
+        """Assign cluster_list (list of member lists) over n_folds."""
+        stats = {f: {"n": 0, "pool": 0, "cat": {c: 0 for c in cats}}
+                 for f in range(n_folds)}
+        assign = {}
+        scope_totals = {c: sum(1 for t in cat_scope if cat_of[t] == c)
+                        for c in cats}
+        for members in cluster_list:
+            add_n = len(members)
+            add_pool = sum(pool_of[t] for t in members)
+            add_cat = defaultdict(int)
+            for t in members:
+                add_cat[cat_of[t]] += 1
+            resulting = {f: stats[f]["n"] + add_n for f in range(n_folds)}
+            min_n = min(resulting.values())
+            cands = [f for f in range(n_folds) if resulting[f] == min_n]
+
+            def key(f):
+                st = stats[f]
+                # largest category deficit for this cluster's categories first
+                deficit = 0.0
+                for c, add in add_cat.items():
+                    tgt = scope_totals[c] / n_folds
+                    if tgt > 0:
+                        deficit += (tgt - st["cat"][c]) / tgt * add
+                return (-deficit, st["pool"] + add_pool, float(rng.random()))
+
+            best = min(cands, key=key)
+            for t in members:
+                assign[t] = best
+            stats[best]["n"] += add_n
+            stats[best]["pool"] += add_pool
+            for c, add in add_cat.items():
+                stats[best]["cat"][c] += add
+        return assign, stats
+
+    ordered = [clusters[c] for c in cluster_ids]
     rng = np.random.default_rng(SEED)
-    for cid in cluster_ids:
-        members = clusters[cid]
-        add_n = len(members)
-        add_pool = sum(pool_of[t] for t in members)
-        add_cat = defaultdict(int)
-        for t in members:
-            add_cat[cat_of[t]] += 1
-        best, best_cost = None, None
-        for f in range(N_OUTER):
-            st = fold_stats[f]
-            cost_n = abs(st["n"] + add_n - N / N_OUTER)
-            cost_pool = abs(st["pool"] + add_pool - total_pool / N_OUTER) / max(total_pool, 1) * N
-            cost_cat = 0.0
-            for c in cats:
-                have = st["cat"][c] + add_cat.get(c, 0)
-                target_c = sum(1 for t in targets if cat_of[t] == c) / N_OUTER
-                cost_cat += abs(have - target_c) / max(target_c, 1)
-            cost = cost_n / (N / N_OUTER) + 0.5 * cost_pool + 0.5 * cost_cat
-            # deterministic tie-break with seeded jitter
-            cost += float(rng.random()) * 1e-6
-            if best_cost is None or cost < best_cost:
-                best, best_cost = f, cost
-        for t in members:
-            fold_of[t] = best
-        fold_stats[best]["n"] += add_n
-        fold_stats[best]["pool"] += add_pool
-        for c in cats:
-            fold_stats[best]["cat"][c] += add_cat.get(c, 0)
+    fold_of, fold_stats = balanced_assign(ordered, N_OUTER, rng, targets)
 
     # inner 3-fold within each outer-train (for nested CV; seed-frozen)
     inner_of = {}
@@ -484,31 +500,13 @@ def make_splits(canon, uf, cluster_of):
         for t in targets:
             if fold_of[t] != outer:
                 inner_clusters[cluster_of[t]].append(t)
-        inner_stats = {i: {"n": 0, "cat": {c: 0 for c in cats}} for i in range(N_INNER)}
-        # largest-first greedy with category balance
-        inner_ids = sorted(inner_clusters,
-                           key=lambda c: (-len(inner_clusters[c]), c))
-        for cid in inner_ids:
-            members = inner_clusters[cid]
-            add_cat = defaultdict(int)
-            for t in members:
-                add_cat[cat_of[t]] += 1
-            best, best_cost = None, None
-            for i in range(N_INNER):
-                st = inner_stats[i]
-                cost = st["n"] + len(members)
-                for c in cats:
-                    target_c = sum(1 for t in targets
-                                   if cat_of[t] == c and fold_of[t] != outer) / N_INNER
-                    cost += 0.5 * abs(st["cat"][c] + add_cat.get(c, 0) - target_c) / max(target_c, 1)
-                cost += float(rng.random()) * 1e-6
-                if best_cost is None or cost < best_cost:
-                    best, best_cost = i, cost
-            for t in members:
-                inner_of[t] = (outer, best)
-            inner_stats[best]["n"] += len(members)
-            for c in cats:
-                inner_stats[best]["cat"][c] += add_cat.get(c, 0)
+        inner_ids = sorted(inner_clusters, key=lambda c: (
+            -len(inner_clusters[c]), -sum(pool_of[t] for t in inner_clusters[c]), c))
+        scope = [t for t in targets if fold_of[t] != outer]
+        assign, _ = balanced_assign([inner_clusters[c] for c in inner_ids],
+                                    N_INNER, rng, scope)
+        for t, i in assign.items():
+            inner_of[t] = (outer, i)
 
     return fold_of, inner_of, fold_stats
 
@@ -686,6 +684,19 @@ def main():
     n_targets = canon["target_id"].nunique()
     print(f"canonical: {len(canon)} records, {n_targets} targets")
 
+    # official SANDSTORM 59-nt construct (switch+loop2+stem1+atg+stem2,
+    # Valeri load_valeri_data composition) joined from the raw CSV
+    raw = pd.read_csv(f"{MNT}/raw/Toehold_Dataset_Final_2019-10-23.csv",
+                      usecols=["sequence_id", "switch", "loop2", "stem1", "atg",
+                               "stem2"])
+    raw["construct_59"] = (raw["switch"].astype(str) + raw["loop2"].astype(str)
+                           + raw["stem1"].astype(str) + raw["atg"].astype(str)
+                           + raw["stem2"].astype(str))
+    canon = canon.merge(raw[["sequence_id", "construct_59"]],
+                        on="sequence_id", how="left")
+    n59 = int(canon["construct_59"].str.len().eq(59).sum())
+    print(f"construct_59 present at length 59: {n59}/{len(canon)}")
+
     # --- context512 ---
     contexts, ctx_status = build_contexts(canon)
     canon["context_status"] = canon["record_id"].map(ctx_status)
@@ -706,20 +717,32 @@ def main():
     # --- splits ---
     fold_of, inner_of, fold_stats = make_splits(canon, uf, cluster_of)
 
-    # --- eligibility (canonical label view) ---
+    # --- eligibility (canonical label view; target-level from finite-label rows) ---
     elig = {}
     for tid, sub in canon.groupby("target_id"):
-        lab = sub.loc[sub["admission_status"] == "admitted_paired", "ON_OFF"]
-        lab = lab.dropna()
-        if len(lab) < 2:
+        lab = sub["ON_OFF"].dropna()
+        lab = lab[np.isfinite(lab)]
+        if len(lab) == 0:
+            elig[tid] = "coverage_only_no_label"
+        elif len(lab) < 2:
             elig[tid] = "coverage_only_singleton"
         elif lab.max() - lab.min() <= 0:
             elig[tid] = "coverage_only_flat_label"
-        elif len(lab) == 0:
-            elig[tid] = "coverage_only_no_label"
         else:
             elig[tid] = "eligible_ranking"
     print("canonical eligibility:", pd.Series(elig).value_counts().to_dict())
+    # row-level eligibility: eligible targets contribute only finite-label rows
+    row_elig = []
+    for _, r in canon.iterrows():
+        tstat = elig[r["target_id"]]
+        finite = np.isfinite(r["ON_OFF"]) if pd.notna(r["ON_OFF"]) else False
+        if tstat == "eligible_ranking" and finite:
+            row_elig.append("eligible_ranking")
+        elif not finite:
+            row_elig.append("coverage_only_no_label")
+        else:
+            row_elig.append(tstat)
+    canon["row_eligibility"] = row_elig
 
     # --- canonical manifest ---
     ctx_col, mask_col = [], []
@@ -745,6 +768,7 @@ def main():
         "source_accession_version": canon["source_accession"],
         "trigger_sequence": canon["trigger"],
         "switch_or_construct_sequence": canon["switch"],
+        "construct_59": canon["construct_59"],
         "candidate_start": canon["window_start"],
         "candidate_end": canon["window_end"],
         "strand": canon["strand"],
@@ -754,7 +778,7 @@ def main():
         "label_on": canon["ON"],
         "label_off": canon["OFF"],
         "label_semantics": "normalized_fluorescence_ON_OFF",
-        "eligibility_status": canon["target_id"].map(elig),
+        "eligibility_status": canon["row_eligibility"],
         "admission_status": canon["admission_status"],
         "context_status": canon["context_status"],
         "source_category": canon["source_category"],
@@ -764,19 +788,35 @@ def main():
     # --- BEACON ---
     beacon, map_ledger = build_beacon(canon, contexts, ctx_status, cluster_of,
                                       fold_of, acc_of)
-    # BEACON eligibility per target (beacon label view, unique rows only)
+    # BEACON eligibility: target-level from unique rows with finite labels,
+    # then row-level (unique + finite -> eligible_ranking)
     bel = {}
     for tid, sub in beacon[beacon["mapping_status"] == "unique"].groupby("target_id"):
         lab = sub["label_on"] - sub["label_off"]
-        if len(lab) < 2:
+        finite = lab[np.isfinite(lab)]
+        if len(finite) == 0:
+            bel[tid] = "coverage_only_no_label"
+        elif len(finite) < 2:
             bel[tid] = "coverage_only_singleton"
-        elif lab.max() - lab.min() <= 0:
+        elif finite.max() - finite.min() <= 0:
             bel[tid] = "coverage_only_flat_label"
         else:
             bel[tid] = "eligible_ranking"
-    beacon["eligibility_status"] = beacon["target_id"].map(bel)
-    beacon.loc[beacon["mapping_status"] != "unique", "eligibility_status"] = \
-        "excluded_" + beacon.loc[beacon["mapping_status"] != "unique", "mapping_status"]
+    row_status = []
+    for _, r in beacon.iterrows():
+        if r["mapping_status"] != "unique":
+            row_status.append("excluded_" + r["mapping_status"])
+            continue
+        lab = r["label_on"] - r["label_off"]
+        finite = pd.notna(lab) and np.isfinite(lab)
+        tstat = bel.get(r["target_id"])
+        if tstat == "eligible_ranking" and finite:
+            row_status.append("eligible_ranking")
+        elif not finite:
+            row_status.append("coverage_only_no_label")
+        else:
+            row_status.append(tstat if tstat else "coverage_only_no_label")
+    beacon["eligibility_status"] = row_status
     beacon.to_parquet(f"{OUT_DIR}/beacon_manifest.parquet", index=False)
     map_ledger.to_csv(f"{OUT_DIR}/mapping_ledger.csv", index=False)
     print("BEACON mapping status:", map_ledger["mapping_status"].value_counts().to_dict())
@@ -796,6 +836,7 @@ def main():
             "source_category": cat_of[t],
             "n_records": pool_of[t],
             "n_admitted_paired": int((sub["admission_status"] == "admitted_paired").sum()),
+            "n_eligible_rows": int((sub["row_eligibility"] == "eligible_ranking").sum()),
             "context_resolved": bool(sub["context_status"].eq("context_resolved").any()),
             "eligibility_status": elig[t],
             "outer_fold": fold_of[t],
@@ -883,6 +924,21 @@ def main():
         (legacy["split"] == "test").sum())
     # C7: v0.2.1 outputs untouched (registry in new dir by construction)
     checks["pass_no_v021_overwrite"] = os.path.isdir(f"{MNT}/releases/v0.2.1")
+    # C8: fold balance — every fold populated; targets within [0.5x, 1.5x] of N/5;
+    # every fold has eligible targets
+    n_per_fold = tgt_df.groupby("outer_fold").size()
+    checks["fold_target_counts"] = {int(k): int(v) for k, v in n_per_fold.items()}
+    checks["pass_fold_balance"] = bool(
+        (n_per_fold >= 0.5 * len(targets) / N_OUTER).all()
+        and (n_per_fold <= 1.5 * len(targets) / N_OUTER).all()
+        and (tgt_df[tgt_df["eligibility_status"] == "eligible_ranking"]
+             .groupby("outer_fold").size().min() >= 1))
+    # C9: eligible rows always have finite labels
+    el_rows = man[man["eligibility_status"] == "eligible_ranking"]
+    checks["eligible_rows"] = int(len(el_rows))
+    checks["pass_eligible_labels_finite"] = bool(
+        np.isfinite(el_rows["label_on"].astype(float)).all()
+        and np.isfinite(el_rows["label_off"].astype(float)).all())
 
     # --- balance stats ---
     balance = []
@@ -895,10 +951,22 @@ def main():
             "n_virus": int((sub["source_category"] == "virus").sum()),
             "n_human_tf": int((sub["source_category"] == "human_TF").sum()),
             "n_clusters": sub["target_cluster_id"].nunique(),
+            "n_eligible_targets": int((sub["eligibility_status"] == "eligible_ranking").sum()),
+            "n_eligible_records": int(sub["n_eligible_rows"].sum()),
         })
 
     summary = {
-        "run": "v0.3.0/registry",
+        "run": "v0.3.0/registry_v3",
+        "supersedes": ("v0.3.0/registry (v1) and v0.3.0/registry_v2: v1's split "
+                       "collapsed folds 1/4 to zero targets (linear deviation "
+                       "cost); v2's split still collapsed folds 2/4 (pool "
+                       "deviation cost rewards piling into the fold nearest the "
+                       "pool target; recorded as a failed run with "
+                       "pass_fold_balance=false); v3 replaces the cost with a "
+                       "balanced k-fold partition (fewest-targets-first, "
+                       "category-deficit and pool tie-breaks) and adds the "
+                       "official 59-nt SANDSTORM construct column. v1/v2 kept "
+                       "on disk for audit only"),
         "seed": SEED,
         "study_id": STUDY_ID,
         "canonical": {"records": len(canon), "targets": n_targets,
@@ -908,8 +976,11 @@ def main():
         "closure_rule_hits": rule_hits,
         "beacon": {"rows": len(beacon),
                    "mapping_status": map_ledger["mapping_status"].value_counts().to_dict()},
-        "eligibility": {"canonical": pd.Series(elig).value_counts().to_dict(),
-                        "beacon": pd.Series(bel).value_counts().to_dict()},
+        "eligibility": {
+            "canonical_targets": pd.Series(elig).value_counts().to_dict(),
+            "canonical_rows": man["eligibility_status"].value_counts().to_dict(),
+            "beacon_rows": beacon["eligibility_status"].value_counts().to_dict(),
+        },
         "fold_balance": balance,
         "acceptance_checks": checks,
         "homology_note": (

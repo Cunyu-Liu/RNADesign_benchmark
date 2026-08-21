@@ -17,7 +17,7 @@ from v03_registry import (  # noqa: E402
     UF, rc, CONTEXT_LEN, FLANK, TRIGGER_LEN, N_OUTER,
 )
 
-REG = "/mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/registry"
+REG = "/mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/registry_v3"
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +144,24 @@ def test_registry_summary_all_checks_pass(reg):
     assert not failed, f"acceptance failures: {failed}"
     assert checks["cross_fold_exact_rc_trigger_overlap"] == 0
     assert checks["clusters_crossing_folds"] == 0
+    # fold balance: every fold populated within [0.5x, 1.5x] of N/5
+    counts = checks["fold_target_counts"]
+    assert len(counts) == N_OUTER
+    n = sum(counts.values())
+    for f, c in counts.items():
+        assert 0.5 * n / N_OUTER <= c <= 1.5 * n / N_OUTER, f"fold {f}: {c}"
+
+
+def test_eligible_rows_have_finite_labels(reg):
+    import numpy as np
+    df = pd.read_parquet(f"{reg}/canonical_manifest.parquet")
+    el = df[df["eligibility_status"] == "eligible_ranking"]
+    assert len(el) > 0
+    assert np.isfinite(el["label_on"].astype(float)).all()
+    assert np.isfinite(el["label_off"].astype(float)).all()
+    # every fold has eligible targets
+    by_fold = el.groupby("outer_fold")["target_id"].nunique()
+    assert (by_fold > 0).all()
 
 
 def test_canonical_manifest_schema(reg):
