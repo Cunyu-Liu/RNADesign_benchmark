@@ -59,7 +59,8 @@ def call(args, log_path, env=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--backbone", choices=["cnn60", "sandstorm"], required=True)
+    ap.add_argument("--backbone", choices=["cnn60", "sandstorm", "rnaelectra"],
+                    required=True)
     ap.add_argument("--outer-fold", type=int, required=True)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--cuda-device", default="6")

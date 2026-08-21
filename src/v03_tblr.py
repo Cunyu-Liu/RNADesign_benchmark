@@ -54,12 +54,24 @@ PER_QUANT = 8
 MAX_EPOCHS = 100
 PATIENCE = 10
 MIN_IMPROVE = 1e-4
-LR = {"cnn60": 3e-4, "sandstorm": 1e-4}
-WD_DEFAULT = {"cnn60": 0.01, "sandstorm": 0.0}
+LR = {"cnn60": 3e-4, "sandstorm": 1e-4, "rnaelectra": 2e-5}
+WD_DEFAULT = {"cnn60": 0.01, "sandstorm": 0.0, "rnaelectra": 0.01}
+RNAELECTRA_PATH = f"{MNT}/external_src/rnaelectra"
 AUX_DEFAULTS = [0.1, 0.25, 0.5]  # inner-CV chooses from these for full TBLR
 
 BASES = "ACGT"
 CODE = {c: i for i, c in enumerate(BASES)}
+
+_RNAE_TOK = None
+
+
+def _rnaelectra_tokenizer():
+    global _RNAE_TOK
+    if _RNAE_TOK is None:
+        from transformers import AutoTokenizer
+        _RNAE_TOK = AutoTokenizer.from_pretrained(
+            RNAELECTRA_PATH, trust_remote_code=True)
+    return _RNAE_TOK
 
 
 def onehot(seq, length):
@@ -156,6 +168,33 @@ class SandstormBackbone(nn.Module):
         return None
 
 
+class RNAElectraBackbone(nn.Module):
+    """Official RNAElectra backbone (ModernBert, HF checkpoint) with mean
+    pooling over sequence positions; k=1 nucleotide tokenizer."""
+
+    _tok_cache = None
+    _model_cache = None
+
+    def __init__(self, dropout=0.0):
+        super().__init__()
+        from transformers import AutoModel, AutoTokenizer
+        if RNAElectraBackbone._model_cache is None:
+            RNAElectraBackbone._tok_cache = AutoTokenizer.from_pretrained(
+                RNAELECTRA_PATH, trust_remote_code=True)
+            RNAElectraBackbone._model_cache = AutoModel.from_pretrained(
+                RNAELECTRA_PATH)
+        self.tok = RNAElectraBackbone._tok_cache
+        self.encoder = RNAElectraBackbone._model_cache
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, input_ids, attention_mask):
+        out = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        h = out.last_hidden_state  # (B, L, H)
+        m = attention_mask.unsqueeze(-1).to(h.dtype)
+        pooled = (h * m).sum(1) / m.sum(1).clamp(min=1)
+        return self.dropout(pooled)
+
+
 class TBLRModel(nn.Module):
     """Backbone + three heads (ranking score, ON, OFF) — identical parameter
     count across objective ablations; unused heads get loss weight 0."""
@@ -192,7 +231,20 @@ class TargetData:
         self.cands = {}
         for tid, sub in df.groupby("target_id"):
             sub = sub.sort_values("record_id")
-            if backbone == "sandstorm":
+            if backbone == "rnaelectra":
+                cons = [str(c) for c in sub["construct_59"]]
+                enc = _rnaelectra_tokenizer()(
+                    cons, padding=True, truncation=True, max_length=62,
+                    return_tensors="np")
+                self.cands[tid] = {
+                    "input_ids": enc["input_ids"].astype(np.int64),
+                    "attention_mask": enc["attention_mask"].astype(np.int64),
+                    "on": sub["label_on"].astype(float).values,
+                    "off": sub["label_off"].astype(float).values,
+                    "onoff": (sub["label_on"] - sub["label_off"]).astype(float).values,
+                    "records": sub["record_id"].values,
+                }
+            elif backbone == "sandstorm":
                 # official SANDSTORM input: 59-nt construct
                 # (switch+loop2+stem1+atg+stem2) with a prepended C -> 60 nt,
                 # plus the prototype PPM of the 59-nt construct.
@@ -323,25 +375,42 @@ def ranking_score(head_out, cands, ablation):
 
 
 @torch.no_grad()
-def score_targets(model, data, targets, device, backbone, chunk=1024):
+def score_targets(model, data, targets, device, backbone, chunk=2048):
+    """Score full candidate sets, batched ACROSS targets (identical outputs;
+    one forward per chunk instead of one per target)."""
     model.eval()
-    out = {}
+    # build a flat index of (tid, row) pairs
+    flat = []
     for tid in targets:
         c = data.cands[tid]
-        n = len(c["records"])
-        heads = {k: [] for k in ("score", "on", "off")}
-        for s in range(0, n, chunk):
-            e = min(s + chunk, n)
-            if backbone == "sandstorm":
-                x = torch.from_numpy(c["x"][s:e]).to(device)
-                ppm = torch.from_numpy(c["ppm"][s:e]).to(device)
-                h = model(x, ppm)
-            else:
-                x = torch.from_numpy(c["x"][s:e]).to(device)
-                h = model(x)
-            for k in heads:
-                heads[k].append(h[k].cpu().numpy())
-        out[tid] = {k: np.concatenate(v) for k, v in heads.items()}
+        for i in range(len(c["records"])):
+            flat.append((tid, i))
+    out = {tid: {k: np.zeros(len(data.cands[tid]["records"]),
+                             dtype=np.float32)
+                 for k in ("score", "on", "off")} for tid in targets}
+    for s in range(0, len(flat), chunk):
+        part = flat[s:s + chunk]
+        if backbone == "sandstorm":
+            x = torch.from_numpy(np.stack(
+                [data.cands[t]["x"][i] for t, i in part])).to(device)
+            ppm = torch.from_numpy(np.stack(
+                [data.cands[t]["ppm"][i] for t, i in part])).to(device)
+            h = model(x, ppm)
+        elif backbone == "rnaelectra":
+            ids = torch.from_numpy(np.stack(
+                [data.cands[t]["input_ids"][i] for t, i in part])).to(device)
+            mask = torch.from_numpy(np.stack(
+                [data.cands[t]["attention_mask"][i] for t, i in part])
+            ).to(device)
+            h = model(ids, mask)
+        else:
+            x = torch.from_numpy(np.stack(
+                [data.cands[t]["x"][i] for t, i in part])).to(device)
+            h = model(x)
+        h = {k: v.cpu().numpy() for k, v in h.items()}
+        for j, (tid, i) in enumerate(part):
+            for k in ("score", "on", "off"):
+                out[tid][k][i] = h[k][j]
     return out
 
 
@@ -364,16 +433,25 @@ def train_one(model, data, train_targets, val_targets, cfg, device, seed,
             rng.shuffle(rows)
             for s in range(0, len(rows), 2048):
                 batch = rows[s:s + 2048]
-                idx_t = [b[0] for b in batch]
-                idx_i = [b[1] for b in batch]
-                xs = np.stack([data.cands[t]["x"][i] for t, i in batch])
                 lab = np.array([data.cands[t]["onoff"][i] for t, i in batch])
-                on = np.array([data.cands[t]["on"][i] for t, i in batch])
-                off = np.array([data.cands[t]["off"][i] for t, i in batch])
-                x = torch.from_numpy(xs).to(device)
-                h = model(x) if backbone != "sandstorm" else model(
-                    x, torch.from_numpy(np.stack(
-                        [data.cands[t]["ppm"][i] for t, i in batch])).to(device))
+                if backbone == "sandstorm":
+                    x = torch.from_numpy(np.stack(
+                        [data.cands[t]["x"][i] for t, i in batch])).to(device)
+                    ppm = torch.from_numpy(np.stack(
+                        [data.cands[t]["ppm"][i] for t, i in batch])).to(device)
+                    h = model(x, ppm)
+                elif backbone == "rnaelectra":
+                    ids = torch.from_numpy(np.stack(
+                        [data.cands[t]["input_ids"][i] for t, i in batch])
+                    ).to(device)
+                    mask = torch.from_numpy(np.stack(
+                        [data.cands[t]["attention_mask"][i] for t, i in batch])
+                    ).to(device)
+                    h = model(ids, mask)
+                else:
+                    x = torch.from_numpy(np.stack(
+                        [data.cands[t]["x"][i] for t, i in batch])).to(device)
+                    h = model(x)
                 loss = F.mse_loss(h["score"], torch.from_numpy(
                     lab.astype(np.float32)).to(device))
                 opt.zero_grad()
@@ -382,22 +460,45 @@ def train_one(model, data, train_targets, val_targets, cfg, device, seed,
         else:
             for s in range(0, len(train_targets), BATCH_TARGETS):
                 batch_t = train_targets[s:s + BATCH_TARGETS]
-                losses = []
+                # per-target candidate selection (quantile rotation)
+                picks = []
                 for tid in batch_t:
                     c = data.cands[tid]
                     sel = quantile_subsample(c["onoff"], rng)
-                    x = torch.from_numpy(c["x"][sel]).to(device)
+                    picks.append((tid, sel))
+                # ONE forward for the whole batch of targets (identical
+                # semantics; removes per-target call overhead)
+                if backbone == "sandstorm":
+                    x = torch.from_numpy(np.concatenate(
+                        [data.cands[t]["x"][i] for t, i in picks])).to(device)
+                    ppm = torch.from_numpy(np.concatenate(
+                        [data.cands[t]["ppm"][i] for t, i in picks])).to(device)
+                    h_all = model(x, ppm)
+                elif backbone == "rnaelectra":
+                    ids = torch.from_numpy(np.concatenate(
+                        [data.cands[t]["input_ids"][i] for t, i in picks])
+                    ).to(device)
+                    mask = torch.from_numpy(np.concatenate(
+                        [data.cands[t]["attention_mask"][i] for t, i in picks])
+                    ).to(device)
+                    h_all = model(ids, mask)
+                else:
+                    x = torch.from_numpy(np.concatenate(
+                        [data.cands[t]["x"][i] for t, i in picks])).to(device)
+                    h_all = model(x)
+                losses = []
+                offset = 0
+                for tid, sel in picks:
+                    n = len(sel)
+                    c = data.cands[tid]
                     onoff = torch.from_numpy(c["onoff"][sel].astype(
                         np.float32)).to(device)
                     on = torch.from_numpy(c["on"][sel].astype(
                         np.float32)).to(device)
                     off = torch.from_numpy(c["off"][sel].astype(
                         np.float32)).to(device)
-                    if backbone == "sandstorm":
-                        ppm = torch.from_numpy(c["ppm"][sel]).to(device)
-                        h = model(x, ppm)
-                    else:
-                        h = model(x)
+                    h = {k: h_all[k][offset:offset + n] for k in h_all}
+                    offset += n
                     if ablation == "tb_mse":
                         losses.append(target_mean_mse(h["score"], onoff))
                     elif ablation == "tb_dual":
@@ -434,6 +535,10 @@ def build_model(backbone, dropout):
         if backbone == "sandstorm":
             bb = SandstormBackbone(dropout=dropout)
             z = bb(torch.zeros(1, 1, 4, 60), torch.zeros(1, 1, 59, 59))
+        elif backbone == "rnaelectra":
+            bb = RNAElectraBackbone(dropout=dropout)
+            z = bb(torch.zeros(1, 8, dtype=torch.long),
+                   torch.ones(1, 8, dtype=torch.long))
         else:
             bb = CNNBackbone(dropout=dropout)
             z = bb(torch.zeros(1, 4, 60))
@@ -473,7 +578,8 @@ def emit_predictions(model, data, targets, device, backbone, ablation,
 # ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--backbone", choices=["cnn60", "sandstorm"], required=True)
+    ap.add_argument("--backbone", choices=["cnn60", "sandstorm", "rnaelectra"],
+                    required=True)
     ap.add_argument("--ablation", choices=["rowwise_mse", "tb_mse", "tb_dual",
                                            "tb_lambdarank", "full_tblr"],
                     required=True)
