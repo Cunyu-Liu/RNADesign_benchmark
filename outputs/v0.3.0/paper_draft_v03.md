@@ -351,9 +351,23 @@ assets are tracked with acquisition scripts and derived scores only.
 
 ## 12. Frozen exit criteria (from contract §12)
 
-High-impact outlet requires: primary contrast >= +0.02 with CI lower bound
-> 0; at least one secondary positive under Holm; both external studies
-same-direction with CI lower bounds > 0; sensitivity analyses not reversing
-conclusions; three final reviewers without major blockers. Otherwise the
-honest outcome is the professional-journal exit (benchmark/resource paper),
-which the current evidence base already supports.
+Gate-by-gate assessment against the frozen high-impact criteria:
+
+| # | Frozen gate | Evidence | Verdict |
+|---|---|---|---|
+| 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); 108 tests green; identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
+| 2 | Primary contrast >= +0.02, CI lower bound > 0 | full_tblr - tb_mse = -0.0125 (CNN) / -0.0204 (SANDSTORM); both CI upper bounds < 0 | FAIL (negative direction, two backbones) |
+| 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0355 / -0.0383) | FAIL |
+| 4 | SOTA wording only vs all pre-declared same-regime comparators | no SOTA claim made; comparators all reported | N/A (no claim) |
+| 5 | VISTA + crowdsourced both same-direction gains with CI lower bounds > 0 | mCherry: both transfer families below random; crowdsourced: CNN absent/negative, SANDSTORM positive (OFF rho 0.413 [0.208, 0.660]) but VISTA negative | FAIL (mixed; not both same-direction) |
+| 6 | Sensitivity analyses do not reverse the main effect | the main effect IS negative; no sensitivity analysis reverses it; leakage/contamination direction quantified (+0.034) | PASS (consistency) |
+| 7 | Three final reviewers, no major blocker | pending RNAElectra family completion | PENDING |
+
+Outcome per the frozen rules: the high-impact gates 2/3/5 fail in the
+negative direction; the honest outcome is the professional-journal exit
+(benchmark/resource paper). Per the contract's tiering rule the manuscript
+is benchmark/identity/audit-centric with regime-stratified orderings,
+split-contamination quantification, objective-mismatch evidence, and
+architecture-shift transfer results as the contributions -- the tier call
+(Bioinformatics Original Paper vs ACS Synthetic Biology) is left to the
+editor synthesis after the RNAElectra family closes gate 7.
