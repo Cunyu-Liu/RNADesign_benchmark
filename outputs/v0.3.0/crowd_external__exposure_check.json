@@ -1,0 +1,7 @@
+{
+  "sensor_overlap": 0,
+  "trigger_overlap": 0,
+  "trigger30_prefix_overlap": 0,
+  "n_regulators": 100,
+  "n_canonical_records": 92731
+}

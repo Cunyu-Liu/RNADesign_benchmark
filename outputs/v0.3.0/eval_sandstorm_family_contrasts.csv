@@ -1,0 +1,3 @@
+kind,method_a,method_b,n_targets,mean_diff,ci_low,ci_high,n_rep,n_clusters,p_value,p_holm
+primary,sandstorm/full_tblr,sandstorm/tb_mse,917,-0.020448346145169306,-0.024091218249495856,-0.01641613895962527,5000,896,1.999960000799984e-05,
+secondary,sandstorm/full_tblr,sandstorm/rowwise_mse,917,-0.03826127506745445,-0.0430682093008034,-0.033501073284069656,5000,896,1.999960000799984e-05,1.999960000799984e-05

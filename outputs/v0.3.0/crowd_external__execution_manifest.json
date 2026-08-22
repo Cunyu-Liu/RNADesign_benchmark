@@ -1,0 +1,25 @@
+{
+  "track": "crowdsourced-100-regulator architecture-shift",
+  "source": "bioRxiv 2026.07.08.737257 (PMC13370501) Suppl Table 1",
+  "download": "pmc PoW-solved fetch (script in logs)",
+  "n_regulators": 100,
+  "outcomes": [
+    "ON avg",
+    "OFF avg",
+    "ON-OFF",
+    "Fold Change Fluorescence"
+  ],
+  "statistic": "Spearman + architecture-cluster bootstrap (K=5 k-means seed 20260821, 5000 reps)",
+  "boundaries": [
+    "single external study; cell-free TX-TL system",
+    "native continuous outcomes; NO candidate-set NDCG",
+    "crowdsourced sensors do not follow canonical switch==RC(trigger) (verified 0/100)",
+    "exposure: 0 overlap with canonical registry"
+  ],
+  "backbones": [
+    "cnn60",
+    "sandstorm"
+  ],
+  "device": "cuda:0",
+  "timestamp_utc": "2026-08-22T20:04:24Z"
+}

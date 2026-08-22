@@ -1,0 +1,21 @@
+{
+  "assembled_utc": "2026-08-22T22:21:31Z",
+  "note": "small deliverables copied locally; large artifacts (predictions/checkpoints) remain under /mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/",
+  "files": [
+    "eval_cnn60_family_method_summary.csv",
+    "eval_cnn60_family_contrasts.csv",
+    "eval_sandstorm_family_method_summary.csv",
+    "eval_sandstorm_family_contrasts.csv",
+    "exposure_matrix.csv",
+    "method_registry.json",
+    "crowd_external__spearman_summary.csv",
+    "crowd_external__exposure_check.json",
+    "crowd_external__execution_manifest.json",
+    "vista_sars__group_measured_summary.csv",
+    "vista_sars__group_transfer_scores_cnn60.csv",
+    "vista_sars__group_transfer_scores_sandstorm.csv",
+    "vista_sars__execution_manifest.json",
+    "protocol_freeze_audit_20260822T221145.json",
+    "paper_draft_v03.md"
+  ]
+}

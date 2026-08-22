@@ -1,0 +1,21 @@
+{
+  "track": "VISTA SARS-CoV selection groups (selection-conditioned)",
+  "source": "Toehold-VISTA NAR 2026 gkag097 (PMC12907555) Supplementary Table 9",
+  "n_switches": 72,
+  "n_groups": 6,
+  "groups": [
+    "VISTA_GFP_high_on",
+    "VISTA_GFP_high_onoff",
+    "VISTA_GFP_low_off",
+    "VISTA_GFP_low_onoff",
+    "VISTA_LacZ_SARS_COV_2_N",
+    "tsgen2_GFP_SARSCoV2_11_N"
+  ],
+  "input_mapping": "trigger30 = target[6:36]; switch30 = switch[25:55] (alignment verified 72/72)",
+  "boundaries": [
+    "switches SELECTED by design-model scores; descriptive analysis only, never independent validation",
+    "single study; paper's own selection groups",
+    "no CI / hypothesis test on pooled Spearman (selection-conditioned data)"
+  ],
+  "timestamp_utc": "2026-08-22T20:39:18Z"
+}
