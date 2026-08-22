@@ -1,5 +1,5 @@
 {
-  "assembled_utc": "2026-08-22T22:48:49Z",
+  "assembled_utc": "2026-08-22T23:08:30Z",
   "note": "small deliverables copied locally; large artifacts (predictions/checkpoints) remain under /mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/",
   "files": [
     "eval_cnn60_family_method_summary.csv",
@@ -16,6 +16,8 @@
     "vista_sars__group_transfer_scores_sandstorm.csv",
     "vista_sars__execution_manifest.json",
     "vista_external__vista_external_results.json",
+    "sensitivity_gate6__sensitivity_primary_contrast.csv",
+    "sensitivity_gate6__sensitivity_summary.json",
     "protocol_freeze_audit_20260822T221145.json",
     "paper_figs/fig1_source_data.csv",
     "paper_figs/fig3b_source_data.csv",

@@ -379,7 +379,7 @@ Gate-by-gate assessment against the frozen high-impact criteria:
 | 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0334 / -0.0383) | FAIL |
 | 4 | SOTA wording only vs all pre-declared same-regime comparators | no SOTA claim made; comparators all reported | N/A (no claim) |
 | 5 | VISTA + crowdsourced both same-direction gains with CI lower bounds > 0 | mCherry: both transfer families below random; crowdsourced: CNN absent/negative, SANDSTORM positive (OFF rho 0.413 [0.208, 0.660]) but VISTA negative | FAIL (mixed; not both same-direction) |
-| 6 | Sensitivity analyses do not reverse the main effect | the main effect IS negative; no sensitivity analysis reverses it; leakage/contamination direction quantified (+0.034) | PASS (consistency) |
+| 6 | Sensitivity analyses do not reverse the main effect | dedicated gate-6 run (runs/v0.3.0/sensitivity_gate6/): excluding legacy-test targets (778 remain), context-unresolved targets (630 remain), or both (542 remain) keeps the primary contrast negative with CIs excluding zero at p=2e-5 on BOTH backbones (CNN -0.0128/-0.0135/-0.0135; SANDSTORM -0.0208/-0.0189/-0.0196); ambiguous BEACON rows are zero in the eligible set by registry construction (asserted) | PASS |
 | 7 | Three final reviewers, no major blocker | pending RNAElectra family completion | PENDING |
 
 Outcome per the frozen rules: the high-impact gates 2/3/5 fail in the

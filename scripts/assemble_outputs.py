@@ -30,6 +30,8 @@ LATEST = {
                     "group_transfer_scores_sandstorm.csv",
                     "execution_manifest.json"],
     "vista_external_": ["vista_external_results.json"],
+    "sensitivity_gate6": ["sensitivity_primary_contrast.csv",
+                          "sensitivity_summary.json"],
     "protocol_freeze_audit_": None,  # handled specially (whole json)
 }
 

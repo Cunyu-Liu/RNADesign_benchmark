@@ -328,9 +328,10 @@ significantly positive (Section 8b).
 ## 9. Reproduction and audit
 
 - Single evaluator kernel (`src/toeholdbench/`); all analyses consume it;
-  108 tests green (discovery-based count via run_v03.sh; evaluator/registry,
-  TBLR training components, tuning orchestrator, watchdog, crowdsourced
-  track, exposure matrix, VISTA SARS-CoV analysis).
+  the full test suite passes (discovery-based count reported by run_v03.sh
+  at execution time -- evaluator/registry, TBLR training components,
+  tuning orchestrator, watchdog, crowdsourced track, exposure matrix,
+  figure provenance, VISTA SARS-CoV and number-audit helpers).
 - Protocol freeze audit (independent, manifest-based): matched-ablation
   parameter parity; fixed seeds; config selections within the pre-declared
   grid; exact per-fold target AND record coverage (f0 19955 / f1 8619 /
@@ -373,12 +374,12 @@ Gate-by-gate assessment against the frozen high-impact criteria:
 
 | # | Frozen gate | Evidence | Verdict |
 |---|---|---|---|
-| 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); 108 tests green; identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
+| 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); full test suite green (count auto-reported by run_v03.sh); identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
 | 2 | Primary contrast >= +0.02, CI lower bound > 0 | full_tblr - tb_mse = -0.0125 (CNN) / -0.0204 (SANDSTORM); both CI upper bounds < 0 | FAIL (negative direction, two backbones) |
 | 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0334 / -0.0383) | FAIL |
 | 4 | SOTA wording only vs all pre-declared same-regime comparators | no SOTA claim made; comparators all reported | N/A (no claim) |
 | 5 | VISTA + crowdsourced both same-direction gains with CI lower bounds > 0 | mCherry: both transfer families below random; crowdsourced: CNN absent/negative, SANDSTORM positive (OFF rho 0.413 [0.208, 0.660]) but VISTA negative | FAIL (mixed; not both same-direction) |
-| 6 | Sensitivity analyses do not reverse the main effect | the main effect IS negative; no sensitivity analysis reverses it; leakage/contamination direction quantified (+0.034) | PASS (consistency) |
+| 6 | Sensitivity analyses do not reverse the main effect | dedicated gate-6 run (runs/v0.3.0/sensitivity_gate6/): excluding legacy-test targets (778 remain), context-unresolved targets (630 remain), or both (542 remain) keeps the primary contrast negative with CIs excluding zero at p=2e-5 on BOTH backbones (CNN -0.0128/-0.0135/-0.0135; SANDSTORM -0.0208/-0.0189/-0.0196); ambiguous BEACON rows are zero in the eligible set by registry construction (asserted) | PASS |
 | 7 | Three final reviewers, no major blocker | pending RNAElectra family completion | PENDING |
 
 Outcome per the frozen rules: the high-impact gates 2/3/5 fail in the
@@ -389,3 +390,40 @@ split-contamination quantification, objective-mismatch evidence, and
 architecture-shift transfer results as the contributions -- the tier call
 (Bioinformatics Original Paper vs ACS Synthetic Biology) is left to the
 editor synthesis after the RNAElectra family closes gate 7.
+
+## References
+
+- Angenent-Mari NM, Garruss AS, Soenksen LR, Church G, Collins JJ. A deep
+  learning approach to programmable RNA switches. Nat Commun 11:5057
+  (2020). doi:10.1038/s41467-020-18677-1
+- Green AA, Silver PA, Collins JJ, Yin P. Toehold switches: de-novo-designed
+  regulators of gene expression. Cell 159(4):925-939 (2014).
+- Valeri JA, Collins KM, Ramesh P, Alcantar MA, Lepe BA, Lu TK, Camacho
+  DM. Sequence-to-function deep learning frameworks for engineered
+  riboregulators. Nat Commun 11:5058 (2020).
+  doi:10.1038/s41467-020-18676-2 (companion paper to ref 1)
+- Ren Y, Chen Z, Qiao L, Jing H, Cai Y, Xu S, Ye P, Ma X, Sun S, Yan H,
+  Yuan D, Ouyang W, Liu X. BEACON: Benchmark for Comprehensive RNA Tasks
+  and Language Models. NeurIPS Datasets and Benchmarks Track (2024).
+  arXiv:2406.10391. Code: github.com/terry-r123/RNABenchmark
+- Robson JM, Green AA. Toehold-VISTA: a machine learning approach to
+  decipher programmable RNA sensor-target interactions. Nucleic Acids Res
+  54(4):gkag097 (2026). doi:10.1093/nar/gkag097
+- Robson JM, Moussas G, Francis D, Green AA. Crowdsourced riboregulators
+  reveal design principles for programmable RNA switching. bioRxiv
+  2026.07.08.737257 (2026; preprint, not peer reviewed).
+- Generative and Predictive Neural Networks for the Design of Functional
+  RNA Molecules (SANDSTORM/GARDN). Zenodo record 15058435; code:
+  github.com/AlexGreenLab/GARDN-SANDSTORM
+  (commit 8694e3ef614ba89e519d093f06caf624a2345189).
+- RNAElectra. Preprint; checkpoint: FreakingPotato/RNAElectra (Hugging
+  Face). Cited as preprint per the contract's information-regime labeling.
+- Burges CJC. From RankNet to LambdaRank to LambdaMART: an overview.
+  Microsoft Research Technical Report MSR-TR-2010-82 (2010).
+
+Citation provenance note: entries 1, 5 come from the project's
+docs/study_context_registry.yaml (Gate 0 frozen artifact); entry 6 from the
+PMC record of the preprint (PMC13370501); entry 7 from the official
+repository README (Zenodo DOI + commit hash from the method registry);
+entry 8 from the method registry's official_source field. Author lists for
+entries 4, 6, 8 are given exactly as available in those sources.
