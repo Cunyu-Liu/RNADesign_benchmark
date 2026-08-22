@@ -213,6 +213,43 @@ outcome is the professional-journal benchmark/resource exit, for which the
 negative transfer and the tsgen2 below-random result are themselves
 contributions.
 
+## 8b. Architecture-shift external track: crowdsourced 100 regulators
+
+The 2026 crowdsourced riboregulator preprint (bioRxiv 2026.07.08.737257;
+PMC13370501) reports 100 community-designed riboregulators measured in a
+cell-free TX-TL system with native continuous outcomes (ON average, OFF
+average, fold-change fluorescence). The supplementary table was fetched
+directly from PMC (proof-of-work-solved fetch; acquisition script
+`scripts/download_crowdsourced.py`); exposure against the canonical registry
+is zero (sensor, trigger, and 30-nt trigger-prefix overlap all 0 of 100), so
+the track is a genuine independent architecture-shift probe. Crowdsourced
+sensors do not follow the canonical switch==RC(trigger) relation (verified
+0/100); sensor lengths span 41-157 nt.
+
+Per the contract, this track uses native continuous outcomes only -- no
+artificial candidate-set NDCG. Frozen canonical-transfer models (full-canonical
+inner-CV config, 5 seeds, seed-averaged predictions) are scored by Spearman
+correlation against native outcomes, with an architecture-cluster bootstrap
+(k-means K=5, seed 20260821, on the preprint's structural descriptors:
+sensor/target length, target-binding positions relative to TSS/RBS/GFP;
+99/100 complete-feature regulators; 5000 cluster-resampling reps):
+
+| Method | prediction | native outcome | Spearman rho | cluster-bootstrap 95% CI |
+|---|---|---|---|---|
+| transfer CNN (5 frozen seeds) | score | ON-OFF | -0.059 | [-0.353, 0.099] |
+| transfer CNN | predicted ON | ON average | 0.010 | [-0.216, 0.201] |
+| transfer CNN | predicted OFF | OFF average | -0.008 | [-0.101, 0.268] |
+| transfer CNN | score | fold change | -0.113 | [-0.499, -0.001] |
+
+Canonical-to-crowdsourced transfer is absent on every native outcome; the
+fold-change correlation is significantly negative (CI excludes zero). This
+extends the VISTA negative-transfer finding from one alternative
+architecture to 100 heterogeneous community architectures: ranking skill
+learned on the canonical linear toehold architecture does not survive
+architecture shift, and the effect is not an artifact of a single sensor
+family. [PENDING: transfer-SANDSTORM numbers once the frozen 5-seed
+transfer models complete training.]
+
 ## 9. Reproduction and audit
 
 - Single evaluator kernel (`src/toeholdbench/`); all analyses consume it;
@@ -227,9 +264,10 @@ contributions.
 ## 10. Limitations and boundaries
 
 - Compute-only reanalysis; no prospective or wet-lab claims.
-- VISTA evidence is a single target; architecture-shift analysis
-  (crowdsourced 100-regulator preprint) is blocked on data access
-  (supplementary gated; no public repo as of 2026-08-22).
+- VISTA evidence is a single target; the crowdsourced architecture-shift
+  track (100 heterogeneous regulators) shows absent-to-negative canonical
+  transfer (Section 8b), so external generalization remains unsupported
+  beyond the native benchmark.
 - BEACON 2024 LM checkpoints (BEACON-B512, SpliceBERT-MS1024, RNA-FM,
   UTR-LM-MRL) are blocked on network access; these comparators are recorded
   as pending assets rather than silently omitted.
