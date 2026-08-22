@@ -90,7 +90,13 @@ def main():
     }
 
     rows = []
-    for bb in ("cnn60", "sandstorm"):
+    backbones = sorted(
+        d.replace("eval_", "").replace("_family", "")
+        for d in os.listdir(BASE)
+        if d.startswith("eval_") and d.endswith("_family")
+        and os.path.exists(f"{BASE}/{d}/target_metrics.csv"))
+    print("families discovered:", backbones)
+    for bb in backbones:
         tm = pd.read_csv(f"{BASE}/eval_{bb}_family/target_metrics.csv")
         # exact method ids
         ma = tm[tm["method_id"] == f"{bb}/full_tblr"].set_index("target_id")
@@ -133,7 +139,7 @@ def main():
     # ---- reversal check ----
     # main effect (full variant) direction per backbone
     reversals = []
-    for bb in ("cnn60", "sandstorm"):
+    for bb in backbones:
         base = df[(df["backbone"] == bb) & (df["variant"] == "full")].iloc[0]
         for _, r in df[(df["backbone"] == bb) &
                        (df["variant"] != "full")].iterrows():

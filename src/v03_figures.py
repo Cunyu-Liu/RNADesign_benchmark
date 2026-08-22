@@ -36,21 +36,31 @@ OBJ_LABEL = {"rowwise_mse": "rowwise\n(legacy)", "tb_mse": "pointwise\n(tb_mse)"
 
 
 def fig1_objectives():
-    fig, ax = plt.subplots(figsize=(5.6, 3.4))
+    fig, ax = plt.subplots(figsize=(6.2, 3.4))
     xs = np.arange(len(OBJ_ORDER))
-    w = 0.36
+    families = sorted(
+        d.replace("eval_", "").replace("_family", "")
+        for d in os.listdir(BASE)
+        if d.startswith("eval_") and d.endswith("_family")
+        and os.path.exists(f"{BASE}/{d}/method_summary.csv"))
+    tags = {"cnn60": "CNN", "sandstorm": "SANDSTORM",
+            "rnaelectra": "RNAElectra"}
+    colors = {"cnn60": "#4878A8", "sandstorm": "#D9822B",
+              "rnaelectra": "#5B9E5B"}
+    w = 0.8 / len(families)
     src = []
-    for i, (bb, tag, color) in enumerate((("cnn60", "CNN", "#4878A8"),
-                                          ("sandstorm", "SANDSTORM",
-                                           "#D9822B"))):
+    for i, bb in enumerate(families):
+        tag, color = tags.get(bb, bb), colors.get(bb, "#888888")
         ms = pd.read_csv(f"{BASE}/eval_{bb}_family/method_summary.csv")
         ms = ms.set_index("method_id")
         vals = [ms.loc[f"{bb}/{o}", "ndcg@10"] for o in OBJ_ORDER]
         rnd = ms.loc[f"{bb}/rowwise_mse", "random_ndcg@10"]
-        ax.bar(xs + (i - 0.5) * w, vals, w, label=f"{tag} backbone",
+        off = (i - (len(families) - 1) / 2) * w
+        ax.bar(xs + off, vals, w, label=f"{tag} backbone",
                color=color, edgecolor="black", linewidth=0.4)
-        for x, v in zip(xs + (i - 0.5) * w, vals):
-            ax.text(x, v + 0.004, f"{v:.3f}", ha="center", fontsize=7)
+        for x, v in zip(xs + off, vals):
+            ax.text(x, v + 0.004, f"{v:.3f}", ha="center",
+                    fontsize=7 if len(families) < 3 else 6)
         src.append(pd.DataFrame(
             {"backbone": bb, "objective": OBJ_ORDER,
              "ndcg@10": vals, "random_ndcg@10": rnd}))
@@ -62,7 +72,7 @@ def fig1_objectives():
     ax.set_ylim(0.60, 0.87)
     ax.legend(frameon=False, loc="lower left", fontsize=8)
     ax.set_title("Objective comparison: TBLR underperforms matched pointwise "
-                 "on both backbones", fontsize=9)
+                 f"on all {len(families)} completed backbones", fontsize=9)
     fig.tight_layout()
     fig.savefig(f"{OUT}/fig1_objectives.png", dpi=300)
     plt.close(fig)

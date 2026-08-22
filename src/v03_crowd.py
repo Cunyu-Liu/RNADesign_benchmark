@@ -171,6 +171,18 @@ def score_models(backbone, models, regs, device):
                     ppm = np.stack([vr.contact_map_ppm(c) for c in cons])
                     h = m(torch.from_numpy(xt).to(device),
                           torch.from_numpy(ppm[:, None, :, :]).to(device))
+                elif backbone == "rnaelectra":
+                    tok = vr._rnaelectra_tokenizer()
+                    enc = tok(
+                        [str(x).upper().replace("T", "U")
+                         for x in chunk["sensor"]],
+                        padding=True, truncation=True, max_length=62,
+                        return_tensors="np")
+                    h = m(
+                        torch.from_numpy(
+                            enc["input_ids"].astype(np.int64)).to(device),
+                        torch.from_numpy(
+                            enc["attention_mask"].astype(np.int64)).to(device))
                 else:
                     raise ValueError(backbone)
                 for k in outs:
