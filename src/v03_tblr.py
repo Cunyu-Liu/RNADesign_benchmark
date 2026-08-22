@@ -66,11 +66,26 @@ _RNAE_TOK = None
 
 
 def _rnaelectra_tokenizer():
+    """Load the official NucEL_Tokenizer directly from the checkpoint's
+    tokenizer.py (custom code; AutoTokenizer's dynamic loading is unreliable
+    across transformers versions)."""
     global _RNAE_TOK
     if _RNAE_TOK is None:
-        from transformers import AutoTokenizer
-        _RNAE_TOK = AutoTokenizer.from_pretrained(
-            RNAELECTRA_PATH, trust_remote_code=True)
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "nucel_tokenizer", f"{RNAELECTRA_PATH}/tokenizer.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        cls = getattr(mod, "NucEL_Tokenizer", None) or \
+            getattr(mod, "NucELTokenizer", None)
+        if cls is None:
+            # fall back: first PreTrainedTokenizer subclass in the module
+            for name in dir(mod):
+                obj = getattr(mod, name)
+                if isinstance(obj, type) and name.endswith("Tokenizer"):
+                    cls = obj
+                    break
+        _RNAE_TOK = cls(k=1, model_max_length=62)
     return _RNAE_TOK
 
 
@@ -172,18 +187,14 @@ class RNAElectraBackbone(nn.Module):
     """Official RNAElectra backbone (ModernBert, HF checkpoint) with mean
     pooling over sequence positions; k=1 nucleotide tokenizer."""
 
-    _tok_cache = None
     _model_cache = None
 
     def __init__(self, dropout=0.0):
         super().__init__()
-        from transformers import AutoModel, AutoTokenizer
+        from transformers import AutoModel
         if RNAElectraBackbone._model_cache is None:
-            RNAElectraBackbone._tok_cache = AutoTokenizer.from_pretrained(
-                RNAELECTRA_PATH, trust_remote_code=True)
             RNAElectraBackbone._model_cache = AutoModel.from_pretrained(
                 RNAELECTRA_PATH)
-        self.tok = RNAElectraBackbone._tok_cache
         self.encoder = RNAElectraBackbone._model_cache
         self.dropout = nn.Dropout(dropout)
 
@@ -375,10 +386,13 @@ def ranking_score(head_out, cands, ablation):
 
 
 @torch.no_grad()
-def score_targets(model, data, targets, device, backbone, chunk=2048):
+def score_targets(model, data, targets, device, backbone,
+                  chunk=None):
     """Score full candidate sets, batched ACROSS targets (identical outputs;
     one forward per chunk instead of one per target)."""
     model.eval()
+    if chunk is None:
+        chunk = 128 if backbone == "rnaelectra" else 2048
     # build a flat index of (tid, row) pairs
     flat = []
     for tid in targets:
@@ -458,6 +472,10 @@ def train_one(model, data, train_targets, val_targets, cfg, device, seed,
                 loss.backward()
                 opt.step()
         else:
+            # gradient-chunk size: small backbones forward the whole 32-target
+            # batch at once; rnaelectra accumulates gradients over 4-target
+            # chunks (identical loss math; LambdaRank pairs stay within-target)
+            chunk_targets = 2 if backbone == "rnaelectra" else BATCH_TARGETS
             for s in range(0, len(train_targets), BATCH_TARGETS):
                 batch_t = train_targets[s:s + BATCH_TARGETS]
                 # per-target candidate selection (quantile rotation)
@@ -466,54 +484,61 @@ def train_one(model, data, train_targets, val_targets, cfg, device, seed,
                     c = data.cands[tid]
                     sel = quantile_subsample(c["onoff"], rng)
                     picks.append((tid, sel))
-                # ONE forward for the whole batch of targets (identical
-                # semantics; removes per-target call overhead)
-                if backbone == "sandstorm":
-                    x = torch.from_numpy(np.concatenate(
-                        [data.cands[t]["x"][i] for t, i in picks])).to(device)
-                    ppm = torch.from_numpy(np.concatenate(
-                        [data.cands[t]["ppm"][i] for t, i in picks])).to(device)
-                    h_all = model(x, ppm)
-                elif backbone == "rnaelectra":
-                    ids = torch.from_numpy(np.concatenate(
-                        [data.cands[t]["input_ids"][i] for t, i in picks])
-                    ).to(device)
-                    mask = torch.from_numpy(np.concatenate(
-                        [data.cands[t]["attention_mask"][i] for t, i in picks])
-                    ).to(device)
-                    h_all = model(ids, mask)
-                else:
-                    x = torch.from_numpy(np.concatenate(
-                        [data.cands[t]["x"][i] for t, i in picks])).to(device)
-                    h_all = model(x)
-                losses = []
-                offset = 0
-                for tid, sel in picks:
-                    n = len(sel)
-                    c = data.cands[tid]
-                    onoff = torch.from_numpy(c["onoff"][sel].astype(
-                        np.float32)).to(device)
-                    on = torch.from_numpy(c["on"][sel].astype(
-                        np.float32)).to(device)
-                    off = torch.from_numpy(c["off"][sel].astype(
-                        np.float32)).to(device)
-                    h = {k: h_all[k][offset:offset + n] for k in h_all}
-                    offset += n
-                    if ablation == "tb_mse":
-                        losses.append(target_mean_mse(h["score"], onoff))
-                    elif ablation == "tb_dual":
-                        losses.append((huber_mean(h["on"], on)
-                                       + huber_mean(h["off"], off)) / 2)
-                    elif ablation == "tb_lambdarank":
-                        losses.append(lambdarank_loss(h["score"], onoff))
-                    elif ablation == "full_tblr":
-                        ll = lambdarank_loss(h["score"], onoff)
-                        aux = (huber_mean(h["on"], on)
-                               + huber_mean(h["off"], off)) / 2
-                        losses.append(ll + cfg["aux_weight"] * aux)
-                loss = torch.stack(losses).mean()  # equal per-target weight
                 opt.zero_grad()
-                loss.backward()
+                n_targets_batch = len(picks)
+                for cs in range(0, n_targets_batch, chunk_targets):
+                    chunk = picks[cs:cs + chunk_targets]
+                    if backbone == "sandstorm":
+                        x = torch.from_numpy(np.concatenate(
+                            [data.cands[t]["x"][i] for t, i in chunk])
+                        ).to(device)
+                        ppm = torch.from_numpy(np.concatenate(
+                            [data.cands[t]["ppm"][i] for t, i in chunk])
+                        ).to(device)
+                        h_all = model(x, ppm)
+                    elif backbone == "rnaelectra":
+                        ids = torch.from_numpy(np.concatenate(
+                            [data.cands[t]["input_ids"][i] for t, i in chunk])
+                        ).to(device)
+                        mask = torch.from_numpy(np.concatenate(
+                            [data.cands[t]["attention_mask"][i]
+                             for t, i in chunk])).to(device)
+                        h_all = model(ids, mask)
+                    else:
+                        x = torch.from_numpy(np.concatenate(
+                            [data.cands[t]["x"][i] for t, i in chunk])
+                        ).to(device)
+                        h_all = model(x)
+                    losses = []
+                    offset = 0
+                    for tid, sel in chunk:
+                        n = len(sel)
+                        c = data.cands[tid]
+                        onoff = torch.from_numpy(c["onoff"][sel].astype(
+                            np.float32)).to(device)
+                        on = torch.from_numpy(c["on"][sel].astype(
+                            np.float32)).to(device)
+                        off = torch.from_numpy(c["off"][sel].astype(
+                            np.float32)).to(device)
+                        h = {k: h_all[k][offset:offset + n] for k in h_all}
+                        offset += n
+                        if ablation == "tb_mse":
+                            losses.append(target_mean_mse(h["score"], onoff))
+                        elif ablation == "tb_dual":
+                            losses.append((huber_mean(h["on"], on)
+                                           + huber_mean(h["off"], off)) / 2)
+                        elif ablation == "tb_lambdarank":
+                            losses.append(lambdarank_loss(h["score"], onoff))
+                        elif ablation == "full_tblr":
+                            ll = lambdarank_loss(h["score"], onoff)
+                            aux = (huber_mean(h["on"], on)
+                                   + huber_mean(h["off"], off)) / 2
+                            losses.append(ll + cfg["aux_weight"] * aux)
+                    # equal per-target weight across the whole 32-target batch;
+                    # gradient accumulation over chunks preserves the exact
+                    # mean-over-targets loss
+                    chunk_loss = torch.stack(losses).sum() / n_targets_batch
+                    chunk_loss.backward()
                 opt.step()
         val = evaluate_val(model, data, val_targets, device, backbone, ablation)
         if val > best_val + MIN_IMPROVE:
