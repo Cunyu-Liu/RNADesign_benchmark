@@ -314,7 +314,9 @@ significantly positive (Section 8b).
 ## 9. Reproduction and audit
 
 - Single evaluator kernel (`src/toeholdbench/`); all analyses consume it;
-  78 tests green (64 evaluator/registry + 14 TBLR).
+  108 tests green (discovery-based count via run_v03.sh; evaluator/registry,
+  TBLR training components, tuning orchestrator, watchdog, crowdsourced
+  track, exposure matrix, VISTA SARS-CoV analysis).
 - Protocol freeze audit (independent, manifest-based): matched-ablation
   parameter parity; fixed seeds; config selections within the pre-declared
   grid; exact per-fold target AND record coverage (f0 19955 / f1 8619 /
