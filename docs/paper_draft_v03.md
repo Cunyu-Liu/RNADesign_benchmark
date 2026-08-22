@@ -402,9 +402,10 @@ editor synthesis after the RNAElectra family closes gate 7.
   DM. Sequence-to-function deep learning frameworks for engineered
   riboregulators. Nat Commun 11:5058 (2020).
   doi:10.1038/s41467-020-18676-2 (companion paper to ref 1)
-- Ren F, Alwan A, Hinks MC, et al. BEACON: a large-scale RNA design
-  benchmark. NeurIPS Datasets and Benchmarks Track (2024). Code:
-  github.com/terry-r123/RNABenchmark
+- Ren Y, Chen Z, Qiao L, Jing H, Cai Y, Xu S, Ye P, Ma X, Sun S, Yan H,
+  Yuan D, Ouyang W, Liu X. BEACON: Benchmark for Comprehensive RNA Tasks
+  and Language Models. NeurIPS Datasets and Benchmarks Track (2024).
+  arXiv:2406.10391. Code: github.com/terry-r123/RNABenchmark
 - Robson JM, Green AA. Toehold-VISTA: a machine learning approach to
   decipher programmable RNA sensor-target interactions. Nucleic Acids Res
   54(4):gkag097 (2026). doi:10.1093/nar/gkag097
