@@ -62,46 +62,60 @@ def main():
     leak_rows = sum(len(v["leak_idx"]) for v in eval_sets.values())
     print(f"leaky rows to add: {leak_rows}")
 
-    # ---- clean-arm replacement rows: matched from training-fold targets ----
-    # per eval target: match a training target with the most similar
-    # candidate count; sample an equal number of its rows stratified by
-    # ON-OFF quintiles
-    clean_idx = []
+    # ---- clean-arm replacement rows ----
+    # Contract: replacement rows are target-cluster-disjoint from every eval
+    # target (training-fold targets are, by the cluster split), matched per
+    # eval target by candidate count (nearest-size donor target) and ON-OFF
+    # label stratification (quintile-matched sampling WITH replacement --
+    # all labeled cluster-disjoint rows already sit in the base training set,
+    # so the clean arm matches the leaky arm's row count via duplicated
+    # upweighting rather than new information).
     train_counts = train.groupby("target_id").size()
     train_onoff = (train["label_on"] - train["label_off"])
-    for tid, v in eval_sets.items():
+    clean_records = []  # record ids, with replacement
+    for tid, v in sorted(eval_sets.items()):
         need = len(v["leak_idx"])
-        # candidate-count-matched donor target
         donor = (train_counts - need).abs().idxmin()
         donor_rows = train[train["target_id"] == donor]
-        if len(donor_rows) <= need:
-            sel = donor_rows.index.values
-        else:
-            # label-stratified sampling by ON-OFF quintiles
-            q = pd.qcut(train_onoff.loc[donor_rows.index], 5,
-                        labels=False, duplicates="drop")
-            take_per = max(1, need // 5)
-            sel = []
-            for b in sorted(q.unique()):
-                rows_b = donor_rows.index.values[q.values == b]
-                take = min(take_per, len(rows_b))
-                sel.extend(rng.choice(rows_b, size=take, replace=False))
-            if len(sel) > need:
-                sel = list(rng.choice(sel, size=need, replace=False))
-        clean_idx.extend(sel)
-    print(f"clean replacement rows: {len(clean_idx)} "
-          f"(target: {leak_rows})")
-    # balance arms to identical counts
-    n = min(leak_rows, len(clean_idx))
-    leak_all = [i for v in eval_sets.values() for i in v["leak_idx"]][:n]
-    clean_all = clean_idx[:n]
+        t_onoff = test.loc[v["leak_idx"], "label_on"] - \
+            test.loc[v["leak_idx"], "label_off"]
+        tq = pd.qcut(t_onoff, 5, labels=False, duplicates="drop")
+        dq = pd.qcut(train_onoff.loc[donor_rows.index], 5, labels=False,
+                     duplicates="drop")
+        sel = []
+        for b in sorted(set(tq.dropna().astype(int)) | {0, 1, 2, 3, 4}):
+            want = int((tq == b).sum())
+            if want <= 0:
+                continue
+            rows_b = donor_rows.index.values[dq.values == b]
+            if len(rows_b) == 0:
+                rows_b = donor_rows.index.values
+            sel.extend(rng.choice(rows_b, size=want, replace=True))
+        # top up from the full donor if quintile matching fell short
+        while len(sel) < need:
+            sel.extend(rng.choice(donor_rows.index.values,
+                                  size=need - len(sel), replace=True))
+        clean_records.extend(train.loc[sel[:need], "record_id"].tolist())
+    print(f"clean replacement rows (with replacement): "
+          f"{len(clean_records)} (target: {leak_rows})")
+    leak_records_all = df.loc[
+        [i for v in eval_sets.values() for i in v["leak_idx"]], "record_id"]\
+        .tolist()
+    assert len(leak_records_all) == leak_rows == len(clean_records)
+    leak_all = leak_records_all
+    clean_all = clean_records
 
     with open(f"{out_dir}/design.json", "w") as fh:
         json.dump({
             "test_fold": 0, "min_candidates": MIN_CAND,
             "eval_fraction": EVAL_FRAC, "seed": SEED,
             "n_eval_targets": n_eval_targets,
-            "n_added_rows_per_arm": n,
+            "n_added_rows_per_arm": leak_rows,
+            "clean_arm_semantics": (
+                "replacement rows sampled with replacement from "
+                "candidate-count-matched training-fold donor targets "
+                "(label-quintile stratified); duplicated copies appended so "
+                "both arms have base+leak_rows rows"),
             "eval_targets": {t: {"n_eval": len(v["eval_idx"]),
                                  "n_leak": len(v["leak_idx"])}
                              for t, v in eval_sets.items()},
@@ -110,26 +124,43 @@ def main():
     # ---- build the two training sets ----
     # rows as record ids; the trainer gets a modified manifest per arm
     base_manifest = f"{REG}/canonical_manifest.parquet"
-    leak_records = set(df.loc[leak_all, "record_id"])
-    clean_records = set(df.loc[clean_all, "record_id"])
+    leak_records = set(leak_all)
+    clean_records = set(clean_all)
     assert not (leak_records & clean_records)
 
-    # training manifests: outer-train rows + arm rows (with outer_fold
-    # REMAPPED to 1 so the trainer's outer-train includes them; the eval
-    # candidates stay fold 0 and are never trained on)
+    # training manifests: outer-train rows + arm rows. The leaky arm REMAPS
+    # its extra rows to fold 1; the clean arm APPENDS duplicate copies of the
+    # replacement rows (already present once in base) so that both manifests
+    # have exactly base + leak_rows rows.
     with open(f"{REG}/split_manifest.json") as fh:
         sm = json.load(fh)
     inner_map = sm["inner_fold_of_target"]
-    for arm, extra_records in (("leaky", leak_records), ("clean", clean_records)):
+    from collections import Counter
+    for arm in ("leaky", "clean"):
         m = df.copy()
         m["inner_fold"] = m["target_id"].map(inner_map)
-        extra = m["record_id"].isin(extra_records)
-        m.loc[extra, "outer_fold"] = 1  # joins the training folds
-        m.loc[extra, "eligibility_status"] = "eligible_ranking"
-        m.loc[extra, "inner_fold"] = 1  # train side of the inner-0 validation
+        if arm == "leaky":
+            extra = m["record_id"].isin(leak_records)
+            m.loc[extra, "outer_fold"] = 1
+            m.loc[extra, "eligibility_status"] = "eligible_ranking"
+            m.loc[extra, "inner_fold"] = 1
+            n_extra = int(extra.sum())
+        else:
+            cnt = Counter(clean_all)
+            appends = []
+            for rid, c in cnt.items():
+                row = df[df["record_id"] == rid]
+                appends.append(pd.concat([row] * c, ignore_index=True))
+            dup = pd.concat(appends, ignore_index=True)
+            dup["outer_fold"] = 1
+            dup["eligibility_status"] = "eligible_ranking"
+            dup["inner_fold"] = 1
+            m = pd.concat([m, dup], ignore_index=True)
+            n_extra = int(len(dup))
         path = f"{out_dir}/manifest_{arm}.parquet"
         m.to_parquet(path, index=False)
-        print(f"{arm} manifest: {extra.sum()} extra rows -> {path}")
+        assert n_extra == leak_rows, (n_extra, leak_rows)
+        print(f"{arm} manifest: {n_extra} extra rows -> {path}")
 
     # ---- fixed evaluation candidate track ----
     eval_rows = df.loc[sorted(i for v in eval_sets.values()

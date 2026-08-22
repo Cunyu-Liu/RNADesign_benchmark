@@ -22,6 +22,7 @@ import json
 import os
 import sys
 import time
+import types
 
 import numpy as np
 
@@ -30,6 +31,14 @@ sys.path.insert(0, f"{REPO}/src")
 
 DATA = "/mnt/cunyuliu/ToeholdDesignBench/raw/Toehold_Dataset_Final_2019-10-23.csv"
 OUT_BASE = "/mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0"
+
+# The official util.py/GA_util.py import nupack at module level, but the
+# official Predictor.ipynb protocol (prototype_ppms_fast / contact_map) never
+# calls NUPACK; stub the import so the official modules load unmodified.
+# NUPACK itself is not installed on this server (license distribution via
+# pypi.nupack.com requires registration; contract leaves the legal install to
+# the user). No NUPACK-dependent code path is exercised by this reproduction.
+sys.modules.setdefault("nupack", types.ModuleType("nupack"))
 
 import tensorflow as tf  # noqa: E402
 import keras  # noqa: E402
@@ -123,6 +132,16 @@ def main():
         }
         results["valeri"].append(vrec)
         print("Valeri fold", vrec)
+
+        # incremental per-fold persistence + memory cleanup (cross-fold TF
+        # accumulation caused GPU OOM at fold 1 in a previous attempt)
+        with open(f"{out_dir}/identity_results.json", "w") as fh:
+            json.dump({"per_fold": results, "protocol": "incremental"},
+                      fh, indent=2)
+        del joint_model, valeri_model
+        import gc
+        keras.backend.clear_session()
+        gc.collect()
 
     summary = {}
     for model in ("sandstorm", "valeri"):
