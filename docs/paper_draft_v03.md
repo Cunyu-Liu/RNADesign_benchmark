@@ -328,9 +328,10 @@ significantly positive (Section 8b).
 ## 9. Reproduction and audit
 
 - Single evaluator kernel (`src/toeholdbench/`); all analyses consume it;
-  108 tests green (discovery-based count via run_v03.sh; evaluator/registry,
-  TBLR training components, tuning orchestrator, watchdog, crowdsourced
-  track, exposure matrix, VISTA SARS-CoV analysis).
+  the full test suite passes (discovery-based count reported by run_v03.sh
+  at execution time -- evaluator/registry, TBLR training components,
+  tuning orchestrator, watchdog, crowdsourced track, exposure matrix,
+  figure provenance, VISTA SARS-CoV and number-audit helpers).
 - Protocol freeze audit (independent, manifest-based): matched-ablation
   parameter parity; fixed seeds; config selections within the pre-declared
   grid; exact per-fold target AND record coverage (f0 19955 / f1 8619 /
@@ -373,7 +374,7 @@ Gate-by-gate assessment against the frozen high-impact criteria:
 
 | # | Frozen gate | Evidence | Verdict |
 |---|---|---|---|
-| 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); 108 tests green; identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
+| 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); full test suite green (count auto-reported by run_v03.sh); identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
 | 2 | Primary contrast >= +0.02, CI lower bound > 0 | full_tblr - tb_mse = -0.0125 (CNN) / -0.0204 (SANDSTORM); both CI upper bounds < 0 | FAIL (negative direction, two backbones) |
 | 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0334 / -0.0383) | FAIL |
 | 4 | SOTA wording only vs all pre-declared same-regime comparators | no SOTA claim made; comparators all reported | N/A (no claim) |
