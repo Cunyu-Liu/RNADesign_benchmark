@@ -135,6 +135,8 @@ Valeri CNN ON R2 0.600 ± 0.004.
 
 ## 5. BEACON input-masking ablations (fixed capacity, fold 0)
 
+(Figure 3B; source data: paper_figs/fig3b_source_data.csv)
+
 One fixed-capacity 148-position model; seven input regimes; identical
 budget/folds/candidates:
 
@@ -156,6 +158,8 @@ trigger carries most of the signal.
 
 ## 6. Controlled leakage experiment
 
+(Figure 3A; source data: paper_figs/fig3a_source_data.csv)
+
 156 candidate-rich fold-0 test targets; fixed seed-frozen 20% evaluation
 candidates (identical in both arms); leaky arm adds 15,838 same-target
 neighboring windows to training; clean arm adds 15,838
@@ -170,6 +174,8 @@ Same-target contamination causally inflates apparent ranking skill by ~3.4
 NDCG points under otherwise identical conditions.
 
 ## 7. TBLR objective vs matched pointwise backbones
+
+(Figure 1; source data: paper_figs/fig1_source_data.csv)
 
 SANDSTORM backbone (complete, 5 folds x 5 objectives x 5 seeds, 917
 targets, structure-aware official backbone):
@@ -210,6 +216,8 @@ objective family. This is a stable, two-backbone negative result for
 ranking-objective superiority in target-balanced toehold ranking.
 
 ## 8. Independent external track: VISTA mCherry
+
+(Figure 2A,B; source data: paper_figs/fig2a_source_data.csv, fig2b_source_data.csv)
 
 189 sites, ONE target (site-level bootstrap CIs only; never extrapolated to
 multi-target claims). Official rankings scored under the paper-documented
@@ -367,7 +375,7 @@ Gate-by-gate assessment against the frozen high-impact criteria:
 |---|---|---|---|
 | 1 | Data-integrity, official-reproduction, statistics, end-to-end hard gates | freeze audit PASSED (all completed families: parameter parity, fixed seeds, per-fold target AND record coverage); 108 tests green; identity reproductions within tolerance (SANDSTORM ON R2 0.626, Valeri 0.600) | PASS |
 | 2 | Primary contrast >= +0.02, CI lower bound > 0 | full_tblr - tb_mse = -0.0125 (CNN) / -0.0204 (SANDSTORM); both CI upper bounds < 0 | FAIL (negative direction, two backbones) |
-| 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0355 / -0.0383) | FAIL |
+| 3 | Secondary matched effect positive under Holm | all secondary contrasts negative (vs rowwise: -0.0334 / -0.0383) | FAIL |
 | 4 | SOTA wording only vs all pre-declared same-regime comparators | no SOTA claim made; comparators all reported | N/A (no claim) |
 | 5 | VISTA + crowdsourced both same-direction gains with CI lower bounds > 0 | mCherry: both transfer families below random; crowdsourced: CNN absent/negative, SANDSTORM positive (OFF rho 0.413 [0.208, 0.660]) but VISTA negative | FAIL (mixed; not both same-direction) |
 | 6 | Sensitivity analyses do not reverse the main effect | the main effect IS negative; no sensitivity analysis reverses it; leakage/contamination direction quantified (+0.034) | PASS (consistency) |

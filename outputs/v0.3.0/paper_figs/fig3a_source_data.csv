@@ -1,0 +1,4 @@
+arm,value
+mean_ndcg_leaky,0.8879237030739453
+mean_ndcg_clean,0.8544232672092361
+mean_paired_diff,0.0335004358647092

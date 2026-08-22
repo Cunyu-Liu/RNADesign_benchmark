@@ -77,6 +77,14 @@ def main():
                      f"{OUT}/{audits[-1]}")
         copied.append(audits[-1])
 
+    # paper figures + source data
+    figs = "/mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/paper_figs"
+    if os.path.isdir(figs):
+        os.makedirs(f"{OUT}/paper_figs", exist_ok=True)
+        for f in os.listdir(figs):
+            shutil.copy2(f"{figs}/{f}", f"{OUT}/paper_figs/{f}")
+            copied.append(f"paper_figs/{f}")
+
     # paper draft snapshot
     shutil.copy2("/home/cunyuliu/ToeholdDesignBench/docs/paper_draft_v03.md",
                  f"{OUT}/paper_draft_v03.md")

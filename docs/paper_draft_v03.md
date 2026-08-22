@@ -135,6 +135,8 @@ Valeri CNN ON R2 0.600 ± 0.004.
 
 ## 5. BEACON input-masking ablations (fixed capacity, fold 0)
 
+(Figure 3B; source data: paper_figs/fig3b_source_data.csv)
+
 One fixed-capacity 148-position model; seven input regimes; identical
 budget/folds/candidates:
 
@@ -156,6 +158,8 @@ trigger carries most of the signal.
 
 ## 6. Controlled leakage experiment
 
+(Figure 3A; source data: paper_figs/fig3a_source_data.csv)
+
 156 candidate-rich fold-0 test targets; fixed seed-frozen 20% evaluation
 candidates (identical in both arms); leaky arm adds 15,838 same-target
 neighboring windows to training; clean arm adds 15,838
@@ -170,6 +174,8 @@ Same-target contamination causally inflates apparent ranking skill by ~3.4
 NDCG points under otherwise identical conditions.
 
 ## 7. TBLR objective vs matched pointwise backbones
+
+(Figure 1; source data: paper_figs/fig1_source_data.csv)
 
 SANDSTORM backbone (complete, 5 folds x 5 objectives x 5 seeds, 917
 targets, structure-aware official backbone):
@@ -210,6 +216,8 @@ objective family. This is a stable, two-backbone negative result for
 ranking-objective superiority in target-balanced toehold ranking.
 
 ## 8. Independent external track: VISTA mCherry
+
+(Figure 2A,B; source data: paper_figs/fig2a_source_data.csv, fig2b_source_data.csv)
 
 189 sites, ONE target (site-level bootstrap CIs only; never extrapolated to
 multi-target claims). Official rankings scored under the paper-documented
