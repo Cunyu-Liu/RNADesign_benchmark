@@ -130,7 +130,16 @@ Start-only stream supervisor: relaunches dead orchestrator streams
 (resume-safe — completed run manifests are skipped) and advances the
 rnaelectra fold queue with bounded concurrency. Never kills processes.
 
-## 8. Acceptance evidence (as of 2026-08-22)
+## 8. Manuscript number-provenance audit
+
+After the paper draft is updated, verify every manuscript number traces to
+a run artifact (exits nonzero on any mismatch):
+
+```bash
+$PY src/v03_number_audit.py
+```
+
+## 9. Acceptance evidence (as of 2026-08-22)
 
 - `./run_v03.sh`: full suite green (discovery-based count reported by the script)
 - `runs/v0.3.0/protocol_freeze_audit_*.json`: PASSED (parameter parity, fixed
