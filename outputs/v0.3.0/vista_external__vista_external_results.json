@@ -46,6 +46,15 @@
       "ci_high": 0.20991829875534818,
       "random_ndcg@10": 0.2627070246342355,
       "gain_over_random": -0.18394360592324976
+    },
+    {
+      "method": "transfer-sandstorm/full_tblr",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.2090545186925345,
+      "ci_low": 0.10738387433679765,
+      "ci_high": 0.3816163894968108,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": -0.05365250594170101
     }
   ],
   "onoff_trunc": [
@@ -93,6 +102,15 @@
       "ci_high": 0.24347329014968916,
       "random_ndcg@10": 0.24963414680853643,
       "gain_over_random": -0.13662721134114206
+    },
+    {
+      "method": "transfer-sandstorm/full_tblr",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.18959248981749996,
+      "ci_low": 0.0929799362606487,
+      "ci_high": 0.33722534973856394,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": -0.060041656991036474
     }
   ]
 }

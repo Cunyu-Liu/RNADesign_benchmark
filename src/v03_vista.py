@@ -116,6 +116,16 @@ def score_transfer(models, sites_df, device, backbone):
         ids = np.concatenate([enc["input_ids"], enc_sw["input_ids"]], axis=1)
         mask = np.concatenate([enc["attention_mask"],
                                enc_sw["attention_mask"]], axis=1)
+    elif backbone == "sandstorm":
+        # construct59 = sensor[25:84]: the sensor region after the 25-nt T7
+        # promoter (same convention as the SARS-CoV groups analysis; the
+        # switch30 toehold is construct59[:30], alignment-tested)
+        cons = [str(s).upper().replace("U", "T")[25:84]
+                for s in sites_df["sensor"]]
+        xs = np.stack([vr.onehot(c, 59) for c in cons])
+        xs = np.pad(xs, ((0, 0), (1, 0), (0, 0)))  # prepend C -> 60 nt
+        x = xs.transpose(0, 2, 1)[:, None, :, :]   # (n, 1, 4, 60)
+        ppm = np.stack([vr.contact_map_ppm(c) for c in cons])[:, None, :, :]
     else:
         trig = np.stack([vr.onehot(s, 30) for s in sites_df["trigger30"]])
         sw = np.stack([vr.onehot(s, 30) for s in sites_df["switch30"]])
@@ -132,10 +142,8 @@ def score_transfer(models, sites_df, device, backbone):
                     h = m(torch.from_numpy(ids[s:e]).to(device),
                           torch.from_numpy(mask[s:e]).to(device))
                 elif backbone == "sandstorm":
-                    ppm = np.stack([vr.contact_map_ppm(t)
-                                    for t in sites_df["trigger30"][s:e]])
-                    h = m(torch.from_numpy(x[s:e][:, None, :, :]).to(device),
-                          torch.from_numpy(ppm[s:e][:, None, :, :]).to(device))
+                    h = m(torch.from_numpy(x[s:e]).to(device),
+                          torch.from_numpy(ppm[s:e]).to(device))
                 else:
                     h = m(torch.from_numpy(x[s:e]).to(device))
                 outs.append(h["score"].cpu().numpy())
@@ -160,8 +168,9 @@ def site_bootstrap_ndcg(scores, onoff, n_rep=5000, seed=20260821, k=10):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--transfer-run", default=None,
-                    help="transfer run id (e.g. transfer_cnn60)")
+    ap.add_argument("--transfer-run", nargs="+", default=None,
+                    help="transfer run ids (e.g. transfer_cnn60 "
+                         "transfer_sandstorm)")
     ap.add_argument("--device", default="cuda:0")
     args = ap.parse_args()
 
@@ -190,26 +199,28 @@ def main():
 
     # transfer models
     if args.transfer_run:
-        tdir = f"{MNT}/runs/v0.3.0/{args.transfer_run}"
-        with open(f"{tdir}/run_manifest.json") as fh:
-            tm = json.load(fh)
-        backbone = tm["backbone"]
         device = torch.device(
             args.device if torch.cuda.is_available() else "cpu")
         if not torch.cuda.is_available():
             print("FATAL: CUDA unavailable for transfer scoring")
             sys.exit(3)
-        models = []
-        for seed in vr.FINAL_SEEDS:
-            ck = torch.load(f"{tdir}/transfer_s{seed}.pt",
-                            map_location=device, weights_only=False)
-            m = vr.build_model(backbone, 0.0)
-            m.load_state_dict(ck["state_dict"])
-            m.to(device)
-            models.append(m)
-        sc = score_transfer(models, sites, device, backbone)
-        methods[f"transfer-{backbone}/full_tblr"] = sc
-        print(f"transfer-{backbone} scored ({len(models)} seeds averaged)")
+        for transfer_run in args.transfer_run:
+            tdir = f"{MNT}/runs/v0.3.0/{transfer_run}"
+            with open(f"{tdir}/run_manifest.json") as fh:
+                tm = json.load(fh)
+            backbone = tm["backbone"]
+            models = []
+            for seed in vr.FINAL_SEEDS:
+                ck = torch.load(f"{tdir}/transfer_s{seed}.pt",
+                                map_location=device, weights_only=False)
+                m = vr.build_model(backbone, 0.0)
+                m.load_state_dict(ck["state_dict"])
+                m.to(device)
+                models.append(m)
+            sc = score_transfer(models, sites, device, backbone)
+            methods[f"transfer-{backbone}/full_tblr"] = sc
+            print(f"transfer-{backbone} scored ({len(models)} seeds "
+                  f"averaged)")
 
     # endpoints
     results = {"single_target_boundary": (

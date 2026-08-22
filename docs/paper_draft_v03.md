@@ -221,6 +221,7 @@ rank convention (rank 1 = best, per Fig. 5D of the VISTA preprint):
 | VISTA PLS-DA (Trunc model) | 0.6692 | [0.5300, 0.8336] | 0.2627 |
 | tsgen2 (direction-reversed sensitivity) | 0.4246 | [0.2261, 0.6856] | 0.2627 |
 | tsgen2 (documented convention) | 0.1147 | [0.0596, 0.1702] | 0.2627 |
+| canonical transfer SANDSTORM (5 frozen seeds) | 0.2091 | [0.1074, 0.3816] | 0.2627 |
 | canonical transfer CNN (5 frozen seeds) | 0.0788 | [0.0324, 0.2099] | 0.2627 |
 
 The prior tsgen2 ranking falls below the analytic random baseline under its
@@ -230,7 +231,12 @@ training with the full-canonical inner-CV config; no external label read
 before final scoring; input pair reconstructed from each 36-nt site exactly
 as the canonical switch==RC(trigger) relation dictates) also fails to
 transfer, scoring below random (0.0788 Full / 0.1130 Trunc vs random
-0.263/0.250). Both failures are architecture-shift results: models trained
+0.263/0.250). The structure-aware SANDSTORM transfer model (construct59
+window of the same tsgen2-hairpin sensors) also lands below random (0.2091
+Full / 0.1896 Trunc) -- on this single alternative scaffold BOTH transfer
+families fail, in contrast to the architecturally diverse crowdsourced set
+where SANDSTORM transfers significantly (Section 8b). These are
+architecture-shift results: models trained
 on the Angenent–Mari linear toehold architecture do not carry ranking skill
 to the tsgen2-hairpin sensor architecture, even though both nominally rank
 "toehold switches for a fixed target". Under the contract's frozen exit

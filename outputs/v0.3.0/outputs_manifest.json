@@ -1,5 +1,5 @@
 {
-  "assembled_utc": "2026-08-22T22:22:24Z",
+  "assembled_utc": "2026-08-22T22:26:12Z",
   "note": "small deliverables copied locally; large artifacts (predictions/checkpoints) remain under /mnt/cunyuliu/ToeholdDesignBench/runs/v0.3.0/",
   "files": [
     "eval_cnn60_family_method_summary.csv",
