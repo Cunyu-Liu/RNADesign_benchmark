@@ -278,7 +278,12 @@ performance. The SARS-CoV-2 N groups measure comparably in this table
 the groups in the measured ordering (pooled Spearman vs measured ON/OFF:
 -0.056 full / -0.101 truncated; descriptive only, no CI claim on
 selection-conditioned data), consistent with the architecture-shift
-transfer failure in Sections 8 and 8b.
+transfer failure in Sections 8 and 8b. The structure-aware SANDSTORM
+transfer model also fails here (-0.086 full / -0.173 truncated) -- these 72
+switches all use the tsgen2-hairpin VISTA scaffold, the same architecture
+family that defeated transfer in the mCherry track, in contrast to the
+architecturally diverse crowdsourced set where SANDSTORM transfer is
+significantly positive (Section 8b).
 
 ## 9. Reproduction and audit
 

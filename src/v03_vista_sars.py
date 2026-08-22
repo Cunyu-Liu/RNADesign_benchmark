@@ -81,12 +81,39 @@ def score_cnn60(models, df, device):
     trig = np.stack([vr.onehot(s, 30) for s in df["trigger30"]])
     sw = np.stack([vr.onehot(s, 30) for s in df["switch30"]])
     x = np.concatenate([trig, sw], axis=1).transpose(0, 2, 1)
+    return _forward(models, x, device)
+
+
+def construct59_of(df):
+    """SANDSTORM construct window: switch[25:84] (sensor starts after the
+    25-nt T7 promoter; same position convention as the switch30 toehold)."""
+    return [s[T7_PREFIX:T7_PREFIX + 59]
+            for s in df["Switch Sequence"].astype(str).str.upper()]
+
+
+def score_sandstorm(models, df, device):
+    cons = construct59_of(df)
+    xs = np.stack([vr.onehot(c, 59) for c in cons])
+    xs = np.pad(xs, ((0, 0), (1, 0), (0, 0)))
+    x = xs.transpose(0, 2, 1)[:, None, :, :]
+    ppm = np.stack([vr.contact_map_ppm(c) for c in cons])[:, None, :, :]
+    return _forward(models, (x, ppm), device)
+
+
+def _forward(models, inputs, device):
     scores, ons, offs = [], [], []
     with torch.no_grad():
         for m in models:
             outs = {"score": [], "on": [], "off": []}
-            for s in range(0, len(df), 64):
-                h = m(torch.from_numpy(x[s:s + 64]).to(device))
+            for s in range(0, len(inputs if isinstance(inputs, np.ndarray)
+                                      else inputs[0]), 64):
+                if isinstance(inputs, np.ndarray):
+                    args = (torch.from_numpy(inputs[s:s + 64]).to(device),)
+                else:
+                    x, ppm = inputs
+                    args = (torch.from_numpy(x[s:s + 64]).to(device),
+                            torch.from_numpy(ppm[s:s + 64]).to(device))
+                h = m(*args)
                 for k in outs:
                     outs[k].append(h[k].cpu().numpy())
             scores.append(np.concatenate(outs["score"]))
@@ -137,24 +164,29 @@ def main():
     print(native.to_string(index=False))
 
     # (b) frozen transfer model scores per group (descriptive)
-    models = load_transfer_models("cnn60", device)
-    if models is None:
-        print("transfer_cnn60 not frozen yet; skipping model scoring")
-    else:
-        sc, on, off = score_cnn60(models, df, device)
-        df["transfer_cnn60_score"] = sc
-        df["transfer_cnn60_on"] = on
-        df["transfer_cnn60_off"] = off
-        ms = group_summary(df, "transfer_cnn60_score")
-        ms.to_csv(f"{out_dir}/group_transfer_scores.csv", index=False)
+    for backbone in ("cnn60", "sandstorm"):
+        models = load_transfer_models(backbone, device)
+        if models is None:
+            print(f"transfer_{backbone} not frozen yet; skipped")
+            continue
+        if backbone == "sandstorm":
+            sc, on, off = score_sandstorm(models, df, device)
+        else:
+            sc, on, off = score_cnn60(models, df, device)
+        df[f"transfer_{backbone}_score"] = sc
+        df[f"transfer_{backbone}_on"] = on
+        df[f"transfer_{backbone}_off"] = off
+        ms = group_summary(df, f"transfer_{backbone}_score")
+        ms.to_csv(f"{out_dir}/group_transfer_scores_{backbone}.csv",
+                  index=False)
         print(ms.to_string(index=False))
         # pooled Spearman (selection-conditioned; descriptive only)
         rho_full = float(spearmanr(sc, df["ON/OFF Full RNA "]).statistic)
         rho_trunc = float(spearmanr(sc, df["ON/OFF Truncated"]).statistic)
-        print(f"pooled Spearman transfer-score vs measured ON/OFF: "
-              f"full={rho_full:.4f} truncated={rho_trunc:.4f} "
+        print(f"pooled Spearman transfer-{backbone} score vs measured "
+              f"ON/OFF: full={rho_full:.4f} truncated={rho_trunc:.4f} "
               f"(SELECTION-CONDITIONED, no CI claim)")
-        df.to_parquet(f"{out_dir}/predictions.parquet", index=False)
+    df.to_parquet(f"{out_dir}/predictions.parquet", index=False)
 
     with open(f"{out_dir}/execution_manifest.json", "w") as fh:
         json.dump({

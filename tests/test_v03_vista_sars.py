@@ -46,3 +46,13 @@ def test_vista_selection_groups_separate_measured_onoff(g, expect_higher):
     hi = df[df["group"] == g]["ON/OFF Full RNA "].mean()
     lo = df[df["group"] == expect_higher]["ON/OFF Full RNA "].mean()
     assert hi > lo
+
+
+def test_construct59_window_after_t7_promoter():
+    df = vs.load_groups()
+    cons = vs.construct59_of(df)
+    assert len(cons) == 72
+    assert all(len(c) == 59 for c in cons)
+    # the toehold (switch30) must be the first 30 nt of the construct window
+    for c, s30 in zip(cons, df["switch30"]):
+        assert c[:30] == s30
