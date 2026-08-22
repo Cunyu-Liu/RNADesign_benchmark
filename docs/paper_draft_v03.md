@@ -193,13 +193,25 @@ rank convention (rank 1 = best, per Fig. 5D of the VISTA preprint):
 |---|---|---|---|
 | VISTA PLS-DA (Full model) | 0.6760 | [0.5336, 0.8247] | 0.2627 |
 | VISTA PLS-DA (Trunc model) | 0.6692 | [0.5300, 0.8336] | 0.2627 |
-| tsgen2 (documented convention) | 0.1147 | [0.0596, 0.1702] | 0.2627 |
 | tsgen2 (direction-reversed sensitivity) | 0.4246 | [0.2261, 0.6856] | 0.2627 |
+| tsgen2 (documented convention) | 0.1147 | [0.0596, 0.1702] | 0.2627 |
+| canonical transfer CNN (5 frozen seeds) | 0.0788 | [0.0324, 0.2099] | 0.2627 |
 
 The prior tsgen2 ranking falls below the analytic random baseline under its
 documented convention -- consistent with the VISTA paper's motivation for
-replacing it. [PENDING: transfer-cnn60 row; transfer training in flight,
-models frozen on canonical before any external label is read.]
+replacing it. The canonical-trained transfer model (frozen on all-canonical
+training with the full-canonical inner-CV config; no external label read
+before final scoring; input pair reconstructed from each 36-nt site exactly
+as the canonical switch==RC(trigger) relation dictates) also fails to
+transfer, scoring below random (0.0788 Full / 0.1130 Trunc vs random
+0.263/0.250). Both failures are architecture-shift results: models trained
+on the Angenent–Mari linear toehold architecture do not carry ranking skill
+to the tsgen2-hairpin sensor architecture, even though both nominally rank
+"toehold switches for a fixed target". Under the contract's frozen exit
+criteria (§12) this fails the high-impact external-gain gate; the honest
+outcome is the professional-journal benchmark/resource exit, for which the
+negative transfer and the tsgen2 below-random result are themselves
+contributions.
 
 ## 9. Reproduction and audit
 
