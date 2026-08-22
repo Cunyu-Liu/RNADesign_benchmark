@@ -250,6 +250,27 @@ architecture shift, and the effect is not an artifact of a single sensor
 family. [PENDING: transfer-SANDSTORM numbers once the frozen 5-seed
 transfer models complete training.]
 
+## 8c. VISTA SARS-CoV selection groups (selection-conditioned)
+
+The published Toehold-VISTA study (NAR 2026, gkag097) reports 72 switches in
+six selection groups of 12 (Supplementary Table 9): four mCherry-screen
+groups selected by VISTA's own predictions (low/high ON/OFF, low OFF, high
+ON), and two SARS-CoV-2 N-gene groups designed by tsgen2 vs VISTA. These
+switches were SELECTED by design-model scores, so the analysis is
+selection-conditioned description, never independent validation (contract
+§9); input mapping is identical to the mCherry track (trigger30 =
+target[6:36], switch30 = switch[25:55]; alignment verified 72/72).
+
+Paper-native group separation (measured ON/OFF full-RNA, mean of 12):
+VISTA_high_onoff 126.9 vs VISTA_low_onoff 12.3 (10.3x); VISTA_high_on 71.1;
+VISTA_low_off 4.1 -- the VISTA selection itself separates measured
+performance. The SARS-CoV-2 N groups measure comparably in this table
+(VISTA 36.0 vs tsgen2 33.0). Our frozen transfer CNN scores do not separate
+the groups in the measured ordering (pooled Spearman vs measured ON/OFF:
+-0.056 full / -0.101 truncated; descriptive only, no CI claim on
+selection-conditioned data), consistent with the architecture-shift
+transfer failure in Sections 8 and 8b.
+
 ## 9. Reproduction and audit
 
 - Single evaluator kernel (`src/toeholdbench/`); all analyses consume it;
