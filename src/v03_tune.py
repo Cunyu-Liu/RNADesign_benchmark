@@ -22,6 +22,7 @@ import sys
 PROJ = "/home/cunyuliu/ToeholdDesignBench"
 MNT = "/mnt/cunyuliu/ToeholdDesignBench"
 PY = "/home/cunyuliu/miniconda3/envs/toeholdbench/bin/python"
+PY_RNAELECTRA = "/mnt/cunyuliu/ToeholdDesignBench/envs/rnaelectra/bin/python"
 LR_MULTS = [0.5, 1.0, 2.0]
 WDS = ["0", "default"]
 AUXS = [0.1, 0.5]
@@ -38,6 +39,12 @@ def configs():
                 out.append({"lr_mult": lr, "weight_decay": wd, "aux": aux})
     assert len(out) == 12
     return out
+
+
+def interpreter_for(backbone):
+    """Per-backbone training interpreter (contract: rnaelectra requires the
+    transformers-4.49 dedicated env; other backbones use toeholdbench)."""
+    return PY_RNAELECTRA if backbone == "rnaelectra" else PY
 
 
 def run_id_for(cfg_idx, inner, backbone, fold):
@@ -68,6 +75,7 @@ def main():
     args = ap.parse_args()
 
     backbone, fold = args.backbone, args.outer_fold
+    py = interpreter_for(backbone)
     tune_dir = f"{MNT}/runs/v0.3.0/tune_{backbone}_f{fold}"
     if not os.path.exists(tune_dir):
         os.makedirs(tune_dir)
@@ -84,7 +92,7 @@ def main():
                 manifest = f"{MNT}/runs/v0.3.0/{rid}/run_manifest.json"
                 if not os.path.exists(manifest):
                     rc = call(
-                        [PY, "-u", "src/v03_tblr.py", "--backbone", backbone,
+                        [py, "-u", "src/v03_tblr.py", "--backbone", backbone,
                          "--ablation", "full_tblr", "--outer-fold", str(fold),
                          "--seed", "20260821", "--lr-mult", str(cfg["lr_mult"]),
                          "--weight-decay", cfg["weight_decay"],
@@ -138,7 +146,7 @@ def main():
                 manifest = f"{MNT}/runs/v0.3.0/{rid}/run_manifest.json"
                 if os.path.exists(manifest):
                     continue
-                cmd = [PY, "-u", "src/v03_tblr.py", "--backbone", backbone,
+                cmd = [py, "-u", "src/v03_tblr.py", "--backbone", backbone,
                        "--ablation", ablation, "--outer-fold", str(fold),
                        "--seed", str(seed),
                        "--lr-mult", str(cfg["lr_mult"]),
