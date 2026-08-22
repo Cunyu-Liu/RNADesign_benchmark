@@ -53,7 +53,7 @@ def test_every_registered_method_covered():
             "sandstorm/tb_mse", "SANDSTORM-official", "Valeri-CNN-official",
             "beacon-mask/trigger_only", "rnaelectra/full_tblr",
             "rnaelectra/tb_mse", "vista-tsgen2", "vista-plsda-full",
-            "transfer-cnn60", "BEACON-B512", "SpliceBERT-MS1024", "RNA-FM",
+            "transfer-cnn60", "transfer-sandstorm", "BEACON-B512", "SpliceBERT-MS1024", "RNA-FM",
             "UTR-LM-MRL"]
     rows = em.build_matrix(mids)
     assert len(rows) == len(mids)
