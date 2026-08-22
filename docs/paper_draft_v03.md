@@ -398,10 +398,10 @@ editor synthesis after the RNAElectra family closes gate 7.
   (2020). doi:10.1038/s41467-020-18677-1
 - Green AA, Silver PA, Collins JJ, Yin P. Toehold switches: de-novo-designed
   regulators of gene expression. Cell 159(4):925-939 (2014).
-- Valeri JA, Collins KM, Le ND, Blanze JV, Haynor TM, Ramesh A, O'Gorman
-  CT, Kritzer JA, Konermann S, Collins JJ. Deep learning provides rapid
-  quantum jump in toehold switch prediction/engineering. Nat Commun
-  11:5058 (2020). doi:10.1038/s41467-020-18677-1 (companion paper)
+- Valeri JA, Collins KM, Ramesh P, Alcantar MA, Lepe BA, Lu TK, Camacho
+  DM. Sequence-to-function deep learning frameworks for engineered
+  riboregulators. Nat Commun 11:5058 (2020).
+  doi:10.1038/s41467-020-18676-2 (companion paper to ref 1)
 - Ren F, Alwan A, Hinks MC, et al. BEACON: a large-scale RNA design
   benchmark. NeurIPS Datasets and Benchmarks Track (2024). Code:
   github.com/terry-r123/RNABenchmark
