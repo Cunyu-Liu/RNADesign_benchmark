@@ -65,8 +65,8 @@ def main():
     fa = json.load(open(f"{BASE}/{audits[-1]}"))
     pack["protocol_freeze_audit"] = {
         "file": audits[-1],
-        "complete_families": fa.get("complete_families",
-                                    fa.get("n_families", "see file")),
+        "complete_families": fa.get("n_final_families_complete"),
+        "fails": fa.get("fails"),
     }
 
     # external tracks
