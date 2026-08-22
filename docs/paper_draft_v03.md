@@ -240,15 +240,24 @@ sensor/target length, target-binding positions relative to TSS/RBS/GFP;
 | transfer CNN | predicted ON | ON average | 0.010 | [-0.216, 0.201] |
 | transfer CNN | predicted OFF | OFF average | -0.008 | [-0.101, 0.268] |
 | transfer CNN | score | fold change | -0.113 | [-0.499, -0.001] |
+| transfer SANDSTORM (5 frozen seeds) | score | ON-OFF | 0.199 | [0.037, 0.497] |
+| transfer SANDSTORM | predicted ON | ON average | 0.326 | [0.106, 0.560] |
+| transfer SANDSTORM | predicted OFF | OFF average | 0.413 | [0.208, 0.660] |
+| transfer SANDSTORM | score | fold change | 0.121 | [-0.086, 0.294] |
 
-Canonical-to-crowdsourced transfer is absent on every native outcome; the
-fold-change correlation is significantly negative (CI excludes zero). This
-extends the VISTA negative-transfer finding from one alternative
-architecture to 100 heterogeneous community architectures: ranking skill
-learned on the canonical linear toehold architecture does not survive
-architecture shift, and the effect is not an artifact of a single sensor
-family. [PENDING: transfer-SANDSTORM numbers once the frozen 5-seed
-transfer models complete training.]
+The two frozen transfer families split sharply. The sequence-only CNN shows
+absent-to-negative transfer on every native outcome (fold-change CI excludes
+zero on the negative side). The structure-aware SANDSTORM transfer model --
+identical training corpus, identical frozen-transfer protocol -- transfers
+significantly and positively: predicted OFF correlates at rho 0.413
+[0.208, 0.660], predicted ON at 0.326 [0.106, 0.560], and the ranking score
+at 0.199 [0.037, 0.497] against native ON-OFF (all cluster-bootstrap CIs
+exclude zero). Architecture shift therefore does not uniformly destroy
+transfer: structure-aware features carry signal across 100 heterogeneous
+community architectures while sequence-only features do not. This is a
+regime-stratified result -- it does not rescue the contract's external-gain
+gate (the VISTA track remains negative transfer), but it identifies the
+backbone regime in which cross-architecture signal survives.
 
 ## 8c. VISTA SARS-CoV selection groups (selection-conditioned)
 
