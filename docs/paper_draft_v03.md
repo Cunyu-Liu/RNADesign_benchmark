@@ -36,8 +36,16 @@ leakage experiment quantifies the causal cost of same-target training
 contamination (+0.034 NDCG@10). On the independent VISTA mCherry track, the
 official PLS-DA ranking attains NDCG@10 0.676 [bootstrap CI 0.534, 0.825]
 against an analytic random baseline of 0.263, while the prior tsgen2 ranking
-falls below random under its documented convention. [PENDING: transfer-model
-VISTA sentence.] All data identities, mappings, exclusions, and statistical
+falls below random under its documented convention. Frozen canonical-
+trained transfer models fail to carry ranking skill to alternative sensor
+architectures -- below random on VISTA's tsgen2-hairpin scaffold (CNN
+transfer 0.079), absent-to-negative on the VISTA SARS-CoV selection groups
+and on 100 crowdsourced heterogeneous regulators for sequence-only
+backbones -- while the structure-aware SANDSTORM transfer model transfers
+significantly on the crowdsourced set (Spearman 0.41 OFF / 0.33 ON,
+cluster-bootstrap CIs excluding zero), identifying backbone structure
+awareness as the regime in which cross-architecture signal survives. All
+data identities, mappings, exclusions, and statistical
 procedures are pre-frozen and auditable.
 
 ## 1. Introduction
