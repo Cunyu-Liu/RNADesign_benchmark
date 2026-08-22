@@ -298,6 +298,27 @@ def main():
          "environment": "toeholdbench",
          "dataset_exposure": "canonical only (VISTA labels never touched "
                              "before final scoring)"},
+        {"method_id": "transfer-sandstorm/full_tblr", "family": "TBLR transfer",
+         "official_source": "internal (canonical-trained transfer)",
+         "source_commit": None,
+         "checkpoint": "runs/v0.3.0/transfer_sandstorm/transfer_s*.pt",
+         "official_or_adapted": "internal",
+         "information_regime": ("external native (construct59 window from "
+                                "T7-suffixed switches / sensor prefix for "
+                                "crowdsourced regulators)"),
+         "training_mode": ("full-canonical training; config from "
+                           "full-canonical inner-CV aggregation (c08: "
+                           "lr_mult 2.0, wd 0, aux 0.1); 5 frozen seeds; no "
+                           "external labels read"),
+         "objective": "TBLR full objective (canonical)",
+         "original_score_direction": "higher_better",
+         "benchmark_score_transform": "identity",
+         "parameter_count": 19083, "tuning_budget": 12,
+         "seeds": [20260821, 20260822, 20260823, 20260824, 20260825],
+         "environment": "toeholdbench",
+         "dataset_exposure": ("canonical only; external exposure check: "
+                              "sensor/trigger/30nt-prefix overlap 0 of 100 "
+                              "on crowdsourced track")},
         # ---- pending assets (blocked; see blockers.json) ----
         {"method_id": "BEACON-B512", "family": "2024 benchmark LM",
          "official_source": "terry-r123/RNABenchmark",
@@ -365,13 +386,17 @@ def main():
                            "zenodo.org blocked from server (000). Needed only "
                            "for the exposure-aware architecture description "
                            "of GARDN/SANDSTORM published designs (Batch 4 "
-                           "descriptive item)."),
+                           "descriptive item). NOTE: Toehold-VISTA NAR 2026 "
+                           "supplementary (SARS-CoV selection groups) was "
+                           "fetched and analyzed 2026-08-22 "
+                           "(scripts/download_vista_nar.py); the GARDN "
+                           "design dump itself remains unavailable."),
                        "Crowdsourced 100-regulator data": (
-                           "bioRxiv full text/supplementary JS-gated; PMC "
-                           "bot-check; Europe PMC has no supplementary "
-                           "indexed; no public repo in AlexGreenLab org as "
-                           "of 2026-08-22. Need user-provided supplementary "
-                           "data or wait for repo release."),
+                           "RESOLVED 2026-08-22: supplementary media-1.xlsx "
+                           "fetched directly from PMC13370501 with the "
+                           "proof-of-work challenge solved "
+                           "(scripts/download_crowdsourced.py); zero "
+                           "exposure vs canonical registry verified."),
                        "NUPACK 4": (
                            "Not installed anywhere on the server. SANDSTORM "
                            "identity reproduction uses the official prototype "
