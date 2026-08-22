@@ -115,6 +115,9 @@ $PY src/v03_crowd.py --backbones cnn60 sandstorm
 # VISTA SARS-CoV selection groups (selection-conditioned description)
 $PY src/v03_vista_sars.py
 
+# paper figures + source data (runs/v0.3.0/paper_figs/)
+$PY src/v03_figures.py
+
 # method x dataset exposure matrix + method registry
 $PY src/v03_exposure_matrix.py
 $PY src/v03_method_registry.py
