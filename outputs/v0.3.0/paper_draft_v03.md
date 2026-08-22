@@ -346,8 +346,18 @@ significantly positive (Section 8b).
 ## 11. Data availability
 
 Canonical CSV (CC BY 4.0, Angenent–Mari 2020), NCBI RefSeq accessions,
-VISTA mCherry ranking workbook (AlexGreenLab/vista). Non-redistributable
-assets are tracked with acquisition scripts and derived scores only.
+VISTA mCherry ranking workbook (AlexGreenLab/vista). External-track sources
+with traceable acquisition scripts: crowdsourced 100-regulator supplementary
+(bioRxiv 2026.07.08.737257 / PMC13370501,
+`scripts/download_crowdsourced.py`) and Toehold-VISTA NAR 2026 supplementary
+(gkag097 / PMC12907555, `scripts/download_vista_nar.py`). GARDN released
+designs (Zenodo 15058435)
+remain network-blocked on this server; the repository's git-lfs pointers do
+not contain the data, and the item stays a recorded blocker with
+exposure-aware description only. Non-redistributable assets are tracked
+with acquisition scripts, ledgers, and derived scores only; the method x
+dataset exposure matrix (outputs/v0.3.0/exposure_matrix.csv) documents which
+dataset can support which claim.
 
 ## 12. Frozen exit criteria (from contract §12)
 
