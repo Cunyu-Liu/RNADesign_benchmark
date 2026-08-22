@@ -29,7 +29,9 @@ sign-flip statistics. Under this protocol we re-evaluate corrected
 biophysical baselines, official reproductions of SANDSTORM and the Valeri
 CNN, input-masking ablations of the BEACON 148-nt constructs at matched
 capacity, and a target-balanced LambdaRank objective (TBLR) across matched
-backbones. [PENDING: primary TBLR-SANDSTORM contrast sentence.] A controlled
+backbones, with the TBLR ranking objective significantly underperforming
+its matched pointwise twin on both (CNN −0.0125; SANDSTORM −0.0204
+NDCG@10, both p = 2e-5). A controlled
 leakage experiment quantifies the causal cost of same-target training
 contamination (+0.034 NDCG@10). On the independent VISTA mCherry track, the
 official PLS-DA ranking attains NDCG@10 0.676 [bootstrap CI 0.534, 0.825]
@@ -161,10 +163,22 @@ NDCG points under otherwise identical conditions.
 
 ## 7. TBLR objective vs matched pointwise backbones
 
-[PENDING: TBLR-SANDSTORM primary contrast -- tuning 177/180 runs complete;
-finals in flight. To be filled from eval_sandstorm_family once all 125
-finals land. Fill exactly: table of 5 objectives x NDCG@10, primary
-contrast effect + CI + p, seed variation.]
+SANDSTORM backbone (complete, 5 folds x 5 objectives x 5 seeds, 917
+targets, structure-aware official backbone):
+
+| Objective | NDCG@10 | Spearman | success@1 |
+|---|---|---|---|
+| legacy row-weighted MSE | 0.8349 | 0.485 | 0.709 |
+| target-balanced MSE (matched pointwise) | 0.8171 | 0.453 | 0.671 |
+| target-balanced dual ON/OFF | 0.8150 | 0.457 | 0.678 |
+| full TBLR (LambdaRank@10 + aux) | 0.7966 | 0.410 | 0.626 |
+| LambdaRank-only | 0.7933 | 0.406 | 0.600 |
+| analytic random | 0.6427 | — | — |
+
+Primary contrast on SANDSTORM: full_tblr − tb_mse = −0.0204, CI
+[−0.0241, −0.0164], p = 2e-5 (cluster bootstrap, Holm-adjusted); secondary
+contrast vs rowwise: −0.0383, CI [−0.0431, −0.0335], p = 2e-5. The
+SANDSTORM backbone REPRODUCES the CNN direction with a larger effect.
 
 CNN60 backbone (complete, 5 folds x 5 objectives x 5 seeds, 917 targets):
 
@@ -180,8 +194,12 @@ CNN60 backbone (complete, 5 folds x 5 objectives x 5 seeds, 917 targets):
 On the CNN backbone the primary-direction contrast is NEGATIVE
 (full_tblr − tb_mse = −0.0125, CI [−0.0160, −0.0089], p = 2e-5). We record
 this honestly; the contract's iteration rules forbid re-running favorable
-subsets. [PENDING: whether the SANDSTORM backbone reproduces or reverses
-this direction; the frozen exit criteria in §12 handle either outcome.]
+subsets. The SANDSTORM backbone reproduces the same direction with a
+larger effect (−0.0204 above): across both backbones the target-balanced
+ranking objective (TBLR) underperforms its matched pointwise twin by
+1.3-2.0 NDCG points, and the legacy row-weighted MSE remains the strongest
+objective family. This is a stable, two-backbone negative result for
+ranking-objective superiority in target-balanced toehold ranking.
 
 ## 8. Independent external track: VISTA mCherry
 
