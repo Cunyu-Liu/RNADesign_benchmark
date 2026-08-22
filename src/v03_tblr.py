@@ -473,9 +473,9 @@ def train_one(model, data, train_targets, val_targets, cfg, device, seed,
                 opt.step()
         else:
             # gradient-chunk size: small backbones forward the whole 32-target
-            # batch at once; rnaelectra accumulates gradients over 4-target
+            # batch at once; rnaelectra accumulates gradients over 1-target
             # chunks (identical loss math; LambdaRank pairs stay within-target)
-            chunk_targets = 2 if backbone == "rnaelectra" else BATCH_TARGETS
+            chunk_targets = 1 if backbone == "rnaelectra" else BATCH_TARGETS
             for s in range(0, len(train_targets), BATCH_TARGETS):
                 batch_t = train_targets[s:s + BATCH_TARGETS]
                 # per-target candidate selection (quantile rotation)

@@ -195,3 +195,34 @@ def test_ranking_score_by_ablation():
     assert list(vr.ranking_score(heads, cands, "tb_dual")) == pytest.approx(
         [0.6, -0.2])
     assert list(vr.ranking_score(heads, cands, "full_tblr")) == [1.0, 2.0]
+
+
+def test_chunk_gradient_accumulation_equivalence():
+    """1-target chunks produce gradients identical to the full 32-target
+    forward (contract: chunking is an exact memory knob, not a protocol
+    change). Replicates the train-loop accumulation pattern."""
+    torch.manual_seed(0)
+    n_targets, n_cand, dim = 8, 5, 4
+    x = torch.randn(n_targets, n_cand, dim)
+    lab = torch.randn(n_targets, n_cand)
+    ref = torch.nn.Linear(dim, 1)
+    crit = torch.nn.MSELoss()
+
+    def grads(chunk_size):
+        model = torch.nn.Linear(dim, 1)
+        model.load_state_dict(ref.state_dict())
+        opt = torch.optim.SGD(model.parameters(), lr=1.0)
+        opt.zero_grad()
+        for cs in range(0, n_targets, chunk_size):
+            chunk = range(cs, min(cs + chunk_size, n_targets))
+            losses = []
+            for t in chunk:
+                h = model(x[t]).squeeze(-1)
+                losses.append(crit(h, lab[t]))
+            (torch.stack(losses).sum() / n_targets).backward()
+        return [p.grad.clone() for p in model.parameters()]
+
+    for chunk_size in (1, 2, 3, n_targets):
+        for g0, g1 in zip(grads(chunk_size), grads(n_targets)):
+            assert torch.allclose(g0, g1, atol=1e-6), \
+                f"chunk_size={chunk_size} diverged"
