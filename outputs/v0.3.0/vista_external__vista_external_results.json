@@ -1,0 +1,98 @@
+{
+  "single_target_boundary": "VISTA mCherry is ONE target; CIs are site-level uncertainty only and must not be extrapolated to multi-target claims",
+  "n_sites": 189,
+  "onoff_full": [
+    {
+      "method": "vista-tsgen2",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.11470004156468931,
+      "ci_low": 0.05955304290331302,
+      "ci_high": 0.1701753437835934,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": -0.14800698306954618
+    },
+    {
+      "method": "vista-tsgen2-reversed-sensitivity",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.424629749473598,
+      "ci_low": 0.22609831459230445,
+      "ci_high": 0.6856168937265845,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": 0.1619227248393625
+    },
+    {
+      "method": "vista-plsda-full",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.6759715670057325,
+      "ci_low": 0.5335558075857546,
+      "ci_high": 0.8247092413583571,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": 0.41326454237149696
+    },
+    {
+      "method": "vista-plsda-trunc",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.6692408514333559,
+      "ci_low": 0.5300019123410059,
+      "ci_high": 0.8335903014818463,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": 0.40653382679912037
+    },
+    {
+      "method": "transfer-cnn60/full_tblr",
+      "endpoint": "onoff_full",
+      "ndcg@10": 0.07876341871098573,
+      "ci_low": 0.03239389364797182,
+      "ci_high": 0.20991829875534818,
+      "random_ndcg@10": 0.2627070246342355,
+      "gain_over_random": -0.18394360592324976
+    }
+  ],
+  "onoff_trunc": [
+    {
+      "method": "vista-tsgen2",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.09481774773509324,
+      "ci_low": 0.058214560359869834,
+      "ci_high": 0.14468052740264775,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": -0.1548163990734432
+    },
+    {
+      "method": "vista-tsgen2-reversed-sensitivity",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.3836554573703946,
+      "ci_low": 0.19381253424017078,
+      "ci_high": 0.6536074175961587,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": 0.13402131056185815
+    },
+    {
+      "method": "vista-plsda-full",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.5653548052379066,
+      "ci_low": 0.4011757760012557,
+      "ci_high": 0.7553893120221812,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": 0.31572065842937014
+    },
+    {
+      "method": "vista-plsda-trunc",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.5933576961119339,
+      "ci_low": 0.4557271163139331,
+      "ci_high": 0.8181373097708601,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": 0.34372354930339744
+    },
+    {
+      "method": "transfer-cnn60/full_tblr",
+      "endpoint": "onoff_trunc",
+      "ndcg@10": 0.11300693546739438,
+      "ci_low": 0.03180013634094114,
+      "ci_high": 0.24347329014968916,
+      "random_ndcg@10": 0.24963414680853643,
+      "gain_over_random": -0.13662721134114206
+    }
+  ]
+}

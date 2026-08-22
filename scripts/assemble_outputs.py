@@ -29,7 +29,7 @@ LATEST = {
                     "group_transfer_scores_cnn60.csv",
                     "group_transfer_scores_sandstorm.csv",
                     "execution_manifest.json"],
-    "vista_external_": ["execution_manifest.json"],
+    "vista_external_": ["vista_external_results.json"],
     "protocol_freeze_audit_": None,  # handled specially (whole json)
 }
 
