@@ -249,6 +249,55 @@ def main():
          "seeds": [20260821, 20260822, 20260823, 20260824, 20260825],
          "environment": "toeholdbench",
          "dataset_exposure": "canonical train folds only; preprint noted"},
+        # ---- VISTA external track (completed) ----
+        {"method_id": "vista-tsgen2", "family": "official external",
+         "official_source": ("AlexGreenLab/vista; tsgen2 ranking column of "
+                             "mCH_on_off_rank.xlsx (paper Fig 5D convention: "
+                             "rank 1 = best)"),
+         "source_commit": git_commit(f"{ext}/vista"),
+         "checkpoint": None, "official_or_adapted": "official_reproduction",
+         "information_regime": "external native (36-nt sites)",
+         "training_mode": "none (precomputed official ranking)",
+         "objective": "official tsgen2 ranking",
+         "original_score_direction": "higher_better (score=-rank)",
+         "benchmark_score_transform": "score = -rank",
+         "parameter_count": "official", "tuning_budget": 0,
+         "seeds": [], "environment": "toeholdbench",
+         "dataset_exposure": "VISTA paper internal (not independent for "
+                             "VISTA; baseline on its own track)"},
+        {"method_id": "vista-plsda-full", "family": "official external",
+         "official_source": ("AlexGreenLab/vista; PLS-DA FULL Rank ONOFF "
+                             "column (official all_trained_model_params.pkl "
+                             "models)"),
+         "source_commit": git_commit(f"{ext}/vista"),
+         "checkpoint": f"{ext}/vista/toehold-VISTA/all_trained_model_params.pkl",
+         "official_or_adapted": "official_reproduction",
+         "information_regime": "external native (engineered features)",
+         "training_mode": "none (precomputed official ranking)",
+         "objective": "PLS-DA ON/OFF Full ranking",
+         "original_score_direction": "higher_better (score=-rank)",
+         "benchmark_score_transform": "score = -rank",
+         "parameter_count": "official", "tuning_budget": 0,
+         "seeds": [], "environment": "toeholdbench",
+         "dataset_exposure": "VISTA paper internal"},
+        {"method_id": "transfer-cnn60/full_tblr", "family": "TBLR transfer",
+         "official_source": "internal (canonical-trained transfer)",
+         "source_commit": None,
+         "checkpoint": "runs/v0.3.0/transfer_cnn60/transfer_s*.pt",
+         "official_or_adapted": "internal",
+         "information_regime": "external native (trigger30+switch30 "
+                                "reconstructed from 36-nt sites)",
+         "training_mode": ("full-canonical training; config from "
+                           "full-canonical inner-CV aggregation; 5 frozen "
+                           "seeds; no external labels read"),
+         "objective": "TBLR full objective (canonical)",
+         "original_score_direction": "higher_better",
+         "benchmark_score_transform": "identity",
+         "parameter_count": 38179, "tuning_budget": 12,
+         "seeds": [20260821, 20260822, 20260823, 20260824, 20260825],
+         "environment": "toeholdbench",
+         "dataset_exposure": "canonical only (VISTA labels never touched "
+                             "before final scoring)"},
         # ---- pending assets (blocked; see blockers.json) ----
         {"method_id": "BEACON-B512", "family": "2024 benchmark LM",
          "official_source": "terry-r123/RNABenchmark",
@@ -312,6 +361,17 @@ def main():
                            "Need user-provided checkpoint files or an HF "
                            "token (HF_TOKEN env) to authenticate the mirror "
                            "proxy."),
+                       "SANDSTORM released designs (Zenodo 15058435)": (
+                           "zenodo.org blocked from server (000). Needed only "
+                           "for the exposure-aware architecture description "
+                           "of GARDN/SANDSTORM published designs (Batch 4 "
+                           "descriptive item)."),
+                       "Crowdsourced 100-regulator data": (
+                           "bioRxiv full text/supplementary JS-gated; PMC "
+                           "bot-check; Europe PMC has no supplementary "
+                           "indexed; no public repo in AlexGreenLab org as "
+                           "of 2026-08-22. Need user-provided supplementary "
+                           "data or wait for repo release."),
                        "NUPACK 4": (
                            "Not installed anywhere on the server. SANDSTORM "
                            "identity reproduction uses the official prototype "
