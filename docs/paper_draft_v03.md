@@ -390,3 +390,39 @@ split-contamination quantification, objective-mismatch evidence, and
 architecture-shift transfer results as the contributions -- the tier call
 (Bioinformatics Original Paper vs ACS Synthetic Biology) is left to the
 editor synthesis after the RNAElectra family closes gate 7.
+
+## References
+
+- Angenent-Mari NM, Garruss AS, Soenksen LR, Church G, Collins JJ. A deep
+  learning approach to programmable RNA switches. Nat Commun 11:5057
+  (2020). doi:10.1038/s41467-020-18677-1
+- Green AA, Silver PA, Collins JJ, Yin P. Toehold switches: de-novo-designed
+  regulators of gene expression. Cell 159(4):925-939 (2014).
+- Valeri JA, Collins KM, Le ND, Blanze JV, Haynor TM, Ramesh A, O'Gorman
+  CT, Kritzer JA, Konermann S, Collins JJ. Deep learning provides rapid
+  quantum jump in toehold switch prediction/engineering. Nat Commun
+  11:5058 (2020). doi:10.1038/s41467-020-18677-1 (companion paper)
+- Ren F, Alwan A, Hinks MC, et al. BEACON: a large-scale RNA design
+  benchmark. NeurIPS Datasets and Benchmarks Track (2024). Code:
+  github.com/terry-r123/RNABenchmark
+- Robson JM, Green AA. Toehold-VISTA: a machine learning approach to
+  decipher programmable RNA sensor-target interactions. Nucleic Acids Res
+  54(4):gkag097 (2026). doi:10.1093/nar/gkag097
+- Robson JM, Moussas G, Francis D, Green AA. Crowdsourced riboregulators
+  reveal design principles for programmable RNA switching. bioRxiv
+  2026.07.08.737257 (2026; preprint, not peer reviewed).
+- Generative and Predictive Neural Networks for the Design of Functional
+  RNA Molecules (SANDSTORM/GARDN). Zenodo record 15058435; code:
+  github.com/AlexGreenLab/GARDN-SANDSTORM
+  (commit 8694e3ef614ba89e519d093f06caf624a2345189).
+- RNAElectra. Preprint; checkpoint: FreakingPotato/RNAElectra (Hugging
+  Face). Cited as preprint per the contract's information-regime labeling.
+- Burges CJC. From RankNet to LambdaRank to LambdaMART: an overview.
+  Microsoft Research Technical Report MSR-TR-2010-82 (2010).
+
+Citation provenance note: entries 1, 5 come from the project's
+docs/study_context_registry.yaml (Gate 0 frozen artifact); entry 6 from the
+PMC record of the preprint (PMC13370501); entry 7 from the official
+repository README (Zenodo DOI + commit hash from the method registry);
+entry 8 from the method registry's official_source field. Author lists for
+entries 4, 6, 8 are given exactly as available in those sources.
