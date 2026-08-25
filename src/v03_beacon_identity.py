@@ -213,8 +213,15 @@ def read_val_best_metric(out_dir: str) -> float | None:
 
 
 def pick_best_lr(records) -> float:
-    """Choose the lr with the highest validation R2 (pure, unit-tested)."""
-    valid = [r for r in records if r.get("val_r2_pct") is not None]
+    """Choose the lr with the highest validation R2 (pure, unit-tested).
+
+    Rows with no validation R2 (run failed / diverged / NaN) are skipped so a
+    single unstable high lr cannot poison the selection.
+    """
+    def ok(r):
+        v = r.get("val_r2_pct")
+        return v is not None and not (isinstance(v, float) and np.isnan(v))
+    valid = [r for r in records if ok(r)]
     if not valid:
         raise ValueError("no valid validation R2 among LR search records")
     return max(valid, key=lambda r: r["val_r2_pct"])["lr"]
@@ -226,6 +233,9 @@ def search_sweep(model_id: str, grid, seed: int, cuda_device: int,
 
     Each lr runs in its own subdir so its `trainer_state.json` (best_metric) is
     not clobbered, then we pick the lr with the best validation R2 (0-1 -> pct).
+    A single failing lr (e.g. high-lr divergence/OOM) is recorded as failed and
+    does not abort the whole sweep, mirroring how a researcher would drop an
+    unstable hyperparameter.
     """
     records = []
     for i, lr in enumerate(grid):
@@ -236,9 +246,16 @@ def search_sweep(model_id: str, grid, seed: int, cuda_device: int,
         env["CUDA_VISIBLE_DEVICES"] = str(cuda_device)
         env["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         print(f"[search] {model_id}: lr={lr} seed={seed} -> {run_dir}")
-        subprocess.run(
-            build_cmd(model_id, seed, lr, run_dir, cuda_device, port),
-            env=env, check=True)
+        try:
+            subprocess.run(
+                build_cmd(model_id, seed, lr, run_dir, cuda_device, port),
+                env=env, check=True)
+        except subprocess.CalledProcessError as exc:
+            print(f"[search] {model_id}: lr={lr} FAILED rc={exc.returncode}; "
+                  f"recording as no valid val metric and continuing")
+            records.append({"lr": lr, "val_r2_pct": None,
+                            "val_raw": None, "failed": True})
+            continue
         raw = read_val_best_metric(run_dir)
         records.append({
             "lr": lr,

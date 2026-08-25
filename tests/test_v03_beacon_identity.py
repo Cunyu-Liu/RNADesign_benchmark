@@ -148,3 +148,15 @@ def test_pick_best_lr_skips_none_raises_if_all_none():
     recs = [{"lr": 1e-5, "val_r2_pct": None}]
     with pytest.raises(ValueError):
         vbi.pick_best_lr(recs)
+
+
+def test_pick_best_lr_skips_nan_and_failed():
+    import math
+    recs = [
+        {"lr": 1e-5, "val_r2_pct": 50.0},
+        {"lr": 1e-4, "val_r2_pct": 0.5778 * 100.0},
+        {"lr": 1e-3, "val_r2_pct": math.nan},
+        {"lr": 5e-3, "val_r2_pct": None, "failed": True},
+    ]
+    # NaN / failed/None high-lr rows must not poison the selection
+    assert vbi.pick_best_lr(recs) == 1e-4
