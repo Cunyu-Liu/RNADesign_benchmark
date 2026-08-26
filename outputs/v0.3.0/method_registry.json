@@ -492,7 +492,7 @@
       "official_source": "terry-r123/RNABenchmark",
       "source_commit": "da7f9c7ac3f39605af27e1dfcdf879adba963d79",
       "checkpoint": "available: external_src/RNABenchmark/checkpoint/baseline/BEACON-B512 (smoke 4/4 passed 2026-08-24; flash_attn installed)",
-      "official_or_adapted": "pending asset",
+      "official_or_adapted": "adapted reimplementation (official protocol run; paper R2 55.20 NOT reproduced)",
       "information_regime": "pretrained RNA LM",
       "training_mode": "official fine-tuning protocol",
       "objective": "official",
@@ -500,9 +500,20 @@
       "benchmark_score_transform": "identity",
       "parameter_count": "official",
       "tuning_budget": "official",
-      "seeds": [],
+      "seeds": [666, 20260821, 20260822],
       "environment": "beacon",
-      "dataset_exposure": "planned: official BEACON splits (identity)"
+      "dataset_exposure": "run: official BEACON PRS split (identity); per-seed test r^2 [49.82, 50.97, 50.99]",
+      "identity": {
+        "metric": "PRS r^2_mean (%)",
+        "lr": "official all_task.sh lr=1e-5",
+        "seeds": [666, 20260821, 20260822],
+        "repro_mean_pct": 50.594,
+        "repro_sd_pct": 0.668,
+        "paper_mean_pct": 55.20,
+        "paper_sd_pct": 0.26,
+        "within_2SD": false,
+        "note": "repro 50.59 < paper lower bound 54.68; honest negative identity, not re-run to flip"
+      }
     },
     {
       "method_id": "SpliceBERT-MS1024",
@@ -510,7 +521,7 @@
       "official_source": "outlets/SpliceBERT.1024nt via terry-r123/RNABenchmark",
       "source_commit": "da7f9c7ac3f39605af27e1dfcdf879adba963d79",
       "checkpoint": "available: external_src/RNABenchmark/checkpoint/opensource/splicebert-ms1024 (smoke 4/4 passed 2026-08-24)",
-      "official_or_adapted": "pending asset",
+      "official_or_adapted": "official reproduction (repro within paper +/-2SD)",
       "information_regime": "pretrained RNA LM",
       "training_mode": "official fine-tuning protocol",
       "objective": "official",
@@ -518,9 +529,20 @@
       "benchmark_score_transform": "identity",
       "parameter_count": "official",
       "tuning_budget": "official",
-      "seeds": [],
+      "seeds": [666, 20260821, 20260822],
       "environment": "beacon",
-      "dataset_exposure": "planned: official BEACON splits (identity)"
+      "dataset_exposure": "run: official BEACON PRS split (identity); per-seed test r^2 [58.06, 58.60, 57.84]",
+      "identity": {
+        "metric": "PRS r^2_mean (%)",
+        "lr": "LR search over [1e-5,5e-5,1e-4,5e-4,1e-3,5e-3] -> best val 1e-4",
+        "seeds": [666, 20260821, 20260822],
+        "repro_mean_pct": 58.166,
+        "repro_sd_pct": 0.386,
+        "paper_mean_pct": 57.72,
+        "paper_sd_pct": 0.45,
+        "within_2SD": true,
+        "note": "repro 58.17 within [56.82,58.62]"
+      }
     },
     {
       "method_id": "RNA-FM",
@@ -528,7 +550,7 @@
       "official_source": "terry-r123/RNABenchmark",
       "source_commit": "da7f9c7ac3f39605af27e1dfcdf879adba963d79",
       "checkpoint": "available: external_src/RNABenchmark/checkpoint/opensource/rna-fm (smoke 4/4 passed 2026-08-24)",
-      "official_or_adapted": "pending asset",
+      "official_or_adapted": "adapted reimplementation (official protocol run; paper R2 55.98 NOT reproduced)",
       "information_regime": "pretrained RNA LM",
       "training_mode": "official fine-tuning protocol",
       "objective": "official",
@@ -536,9 +558,20 @@
       "benchmark_score_transform": "identity",
       "parameter_count": "official",
       "tuning_budget": "official",
-      "seeds": [],
+      "seeds": [666, 20260821, 20260822],
       "environment": "beacon",
-      "dataset_exposure": "planned: official BEACON splits (identity)"
+      "dataset_exposure": "run: official BEACON PRS split (identity); per-seed test r^2 [57.56, 57.82, 57.65]",
+      "identity": {
+        "metric": "PRS r^2_mean (%)",
+        "lr": "LR search (val best 5e-5=57.85); lr=0.005 crashed, robustness fix applied; report at 5e-5",
+        "seeds": [666, 20260821, 20260822],
+        "repro_mean_pct": 57.675,
+        "repro_sd_pct": 0.132,
+        "paper_mean_pct": 55.98,
+        "paper_sd_pct": 0.09,
+        "within_2SD": false,
+        "note": "repro 57.67 > paper upper bound 56.16; honest negative identity, not re-run to flip"
+      }
     },
     {
       "method_id": "UTR-LM-MRL",
@@ -546,7 +579,7 @@
       "official_source": "terry-r123/RNABenchmark",
       "source_commit": "da7f9c7ac3f39605af27e1dfcdf879adba963d79",
       "checkpoint": "available: external_src/RNABenchmark/checkpoint/opensource/utr-lm-mrl (smoke 4/4 passed 2026-08-24)",
-      "official_or_adapted": "pending asset",
+      "official_or_adapted": "adapted reimplementation (official protocol run; paper R2 57.28 NOT reproduced)",
       "information_regime": "pretrained RNA LM",
       "training_mode": "official fine-tuning protocol",
       "objective": "official",
@@ -554,9 +587,20 @@
       "benchmark_score_transform": "identity",
       "parameter_count": "official",
       "tuning_budget": "official",
-      "seeds": [],
+      "seeds": [666, 20260821, 20260822],
       "environment": "beacon",
-      "dataset_exposure": "planned: official BEACON splits (identity)"
+      "dataset_exposure": "run: official BEACON PRS split (identity); per-seed test r^2 [56.79, 55.77, 56.97]",
+      "identity": {
+        "metric": "PRS r^2_mean (%)",
+        "lr": "LR search over grid -> best val 5e-4 (57.80)",
+        "seeds": [666, 20260821, 20260822],
+        "repro_mean_pct": 56.511,
+        "repro_sd_pct": 0.646,
+        "paper_mean_pct": 57.28,
+        "paper_sd_pct": 0.10,
+        "within_2SD": false,
+        "note": "repro 56.51 < paper lower bound 57.08; honest negative identity, not re-run to flip"
+      }
     }
   ],
   "blockers": {
